@@ -1,0 +1,20 @@
+{
+  "name": "oss-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.53.0",
+    "eslint-config-google": "^0.14.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "mongoose": "^8.0.0"
+  }
+}
