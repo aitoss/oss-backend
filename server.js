@@ -2,7 +2,6 @@ const express = require('express');
 const connectDB = require('./config/db');
 const app = express();
 
-// connect database and view engine
 connectDB();
 app.set('view-engine', 'ejs');
 
@@ -18,7 +17,7 @@ app.get('/', (req, res) => {
 })
 
 // Routes
-app.use('/api/v2/',require('./routes/blog'));
+app.use('/api/anubhav/',require('./routes/blog'));
 
 const port = 3000;
 
