@@ -1,6 +1,7 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const connectDB = require('./config/db');
+const cors = require('cors');
 const app = express();
 
 require('dotenv').config();
@@ -21,10 +22,11 @@ async function connectToMongoDB() {
   }
 }
 
-connectToMongoDB();
+connectDB();
 
 app.set('view-engine', 'ejs');
 
+app.use(cors());
 app.use(express.json({}));
 app.use(express.urlencoded({ extended: false }));
 app.use('/public', express.static('public'));

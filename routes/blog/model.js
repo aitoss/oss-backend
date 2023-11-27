@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
-const articleSchema = new mongoose.Schema({
+const blogSchema = new mongoose.Schema({
   title: {
     type: String,
     trim: true,
-    required: [true, 'Please provide a Title of Article'],
+    required: [true, 'Please provide a Title of Blog'],
   },
-  typeOfArticle: {
+  typeOfBlog: {
     type: String,
     enum: ['Internship', 'FullTime', 'Interview-experience'],
     trim: true,
@@ -31,7 +31,7 @@ const articleSchema = new mongoose.Schema({
     trim: true,
     required: [true, 'Please provide your Experience in detail'],
   },
-  articleTags: {
+  blogTags: {
     type: [String],
   },
   isAuthentic: {
