@@ -1,26 +1,7 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const app = express();
-
-require('dotenv').config();
-
-const mongouri = process.env.MONGOURI;
-
-async function connectToMongoDB() {
-  const client = new MongoClient(mongouri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-
-  try {
-    await client.connect();
-    console.log('Connected to MongoDB');
-  } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
-  }
-}
 
 connectDB();
 
