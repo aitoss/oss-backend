@@ -4,7 +4,10 @@ const router=express.Router()
 
 const Article = require('../models/Article');
 
-router.get('/blog', async (req, res) => {
+// @route  GET /api/anubhav/blogs
+// @desc   get blogs 
+// @access public
+router.get('/blogs', async (req, res) => {
     try {
         const blogs = await Article.find({}).sort({ createdAt: -1 });
         res.json(blogs);
