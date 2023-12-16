@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
 app.use('/api/anubhav/', require('./routes/blog'));
 app.use('/api/anubhav/', require('./routes/user-feedback'));
 app.use('/api/anubhav/', require('./routes/companies'));
-app.use('/api/anubhav/', require('./routes/requestArticle'));
+app.use('/api/anubhav/', require('./routes/user-reqarticle'));
 
 const port = process.env.PORT || 3000;
 

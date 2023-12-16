@@ -1,0 +1,40 @@
+const express = require('express'); 
+const router = express.Router();
+
+const Reqarticle= require('../models/Reqarticle');
+
+// @route  GET /api/anubhav/getreqarticle
+// @desc   get getreqarticle
+// @route POST /api/anubhav/reqarticle
+// @desc   post rearticle
+// @access public
+
+router.get('/getreqarticle', async (req, res, next) =>{
+          try {
+                   const reqarticle= await Reqarticle.find();
+                   res.json(reqarticle);
+          } catch (error) {
+                    console.log(error);
+          }
+});
+
+router.post('/reqarticle', async (req, res, next) =>{
+          const {requesterName, requesteeName, requesteeContact, company, note} = req.body;
+
+          const createReqarticle = new Reqarticle({
+                    requesterName,
+                    requesteeName,
+                    requesteeContact,
+                    company,
+                    note
+          })
+
+          try {
+                    await createReqarticle.save();
+          } catch (error) {
+                    console.log(error);
+          }
+          res.status(201).json({createReqarticle})
+})
+
+module.exports = router;
