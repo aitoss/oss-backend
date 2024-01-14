@@ -4,13 +4,13 @@ const router = express.Router();
 
 const Feedback= require('../models/Feedback');
 
-// @route  GET /api/anubhav/getfeedback
+// @route  GET /api/anubhav/getfeedbacks
 // @desc   get getfeedback 
-// @route POST /api/anubhav/feedback
+// @route POST /api/anubhav/feedbacks
 // @desc   post feedback
 // @access public
 
-router.get('/getfeedback', async (req, res, next) =>{
+router.get('/feedbacks', async (req, res, next) =>{
                 try {
                     const feedback= await Feedback.find({}).sort({createdAt: -1});
                     res.json(feedback);
@@ -19,7 +19,7 @@ router.get('/getfeedback', async (req, res, next) =>{
                 }    
 })
 
-router.post('/feedback', async (req, res, next) =>{
+router.post('/feedbacks', async (req, res, next) =>{
           const {feedback, rating, createdAt} = req.body;
 
           const createFeedback = new Feedback({
