@@ -3,7 +3,7 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 const app = express();
 
-connectDB();
+connectDB(); 
 
 app.set('view-engine', 'ejs');
 
@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-app.use('/api/anubhav/', require('./routes/blog'));
+app.use('/api/anubhav/', require('./routes/blogs'));
 app.use('/api/anubhav/', require('./routes/user-feedback'));
 app.use('/api/anubhav/', require('./routes/companies'));
 app.use('/api/anubhav/', require('./routes/user-reqarticle'));
