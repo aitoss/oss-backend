@@ -14,7 +14,9 @@ app.use('/public', express.static('public'));
 app.get('/', (req, res) => {
     res.send("home")
 });
+
 // Routes
+
 app.use('/api/anubhav/', require('./routes/blogs'));
 app.use('/api/anubhav/', require('./routes/feedbacks'));
 app.use('/api/anubhav/', require('./routes/companies'));
