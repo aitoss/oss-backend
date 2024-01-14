@@ -9,7 +9,7 @@ const Reqarticle= require('../models/Reqarticle');
 // @desc   post rearticle
 // @access public
 
-router.get('/getreqarticle', async (req, res, next) =>{
+router.get('/reqarticle', async (req, res, next) =>{
           try {
                    const reqarticle= await Reqarticle.find();
                    res.json(reqarticle);

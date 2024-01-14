@@ -18,6 +18,6 @@ app.get('/', (req, res) => {
 app.use('/api/anubhav/', require('./routes/blogs'));
 app.use('/api/anubhav/', require('./routes/feedbacks'));
 app.use('/api/anubhav/', require('./routes/companies'));
-app.use('/api/anubhav/', require('./routes/user-reqarticle'));
+app.use('/api/anubhav/', require('./routes/reqarticle'));
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}`));
