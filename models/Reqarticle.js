@@ -19,7 +19,12 @@ const reqArticleSchema = new mongoose.Schema({
   },
   note: {
     type: String,
-    default: "",
+    default: '',
+  },
+  status: {
+    type: String,
+    enum: ['Draft', 'Requested', 'Complete'],
+    default: 'Draft',
   },
 });
 

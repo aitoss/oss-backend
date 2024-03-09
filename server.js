@@ -6,14 +6,14 @@ connectDB();
 app.set('view-engine', 'ejs');
 app.use(cors());
 app.use(express.json({}));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({extended: false}));
 app.use('/public', express.static('public'));
 
 // @route  GET home/:name
 // @desc   home page render
 // @access private
 app.get('/', (req, res) => {
-    res.send("home")
+  res.send('home');
 });
 
 // Routes

@@ -1,4 +1,4 @@
-const express = require('express'); 
+const express = require('express');
 const router = express.Router();
 
 const Reqarticle= require('../models/Reqarticle');
@@ -10,31 +10,40 @@ const Reqarticle= require('../models/Reqarticle');
 // @access public
 
 router.get('/reqarticle', async (req, res, next) =>{
-          try {
-                   const reqarticle= await Reqarticle.find();
-                   res.json(reqarticle);
-          } catch (error) {
-                    console.log(error);
-          }
+  try {
+    const reqarticle= await Reqarticle.find();
+    res.json(reqarticle);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
+// Frontend request expectation
+// Header { Content-Type: application/json}
+// {
+//     "requesterName": "Harshal Patil",
+//     "requesteeName": "Elon Musk",
+//     "requesteeContact": "https://www.linkedin.com/in/to/",
+//     "company": "Flipkart",
+//     "note": "dev test remove later"
+// }
+
 router.post('/reqarticle', async (req, res, next) =>{
-          const {requesterName, requesteeName, requesteeContact, company, note} = req.body;
+  const {requesterName, requesteeName, requesteeContact, company, note} = req.body;
+  const createReqarticle = new Reqarticle({
+    requesterName,
+    requesteeName,
+    requesteeContact,
+    company,
+    note,
+  });
 
-          const createReqarticle = new Reqarticle({
-                    requesterName,
-                    requesteeName,
-                    requesteeContact,
-                    company,
-                    note
-          })
-
-          try {
-                    await createReqarticle.save();
-          } catch (error) {
-                    console.log(error);
-          }
-          res.status(201).json({createReqarticle})
-})
+  try {
+    await createReqarticle.save();
+  } catch (error) {
+    console.log(error);
+  }
+  res.status(201).json({createReqarticle});
+});
 
 module.exports = router;
