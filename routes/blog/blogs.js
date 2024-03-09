@@ -38,4 +38,34 @@ router.get('/blog/:index', async (req, res) => {
   }
 });
 
+// @route  GET /api/anubhav/search
+// @desc   implement search and filters
+// @access public
+router.get('/search', async (req, res) => {
+  const query = req.query.q;
+  const companyName = req.query.company;
+  const tags = req.query.tags;
+
+  const baseQuery = { $text: { $search: query } };
+
+  if (companyName) {
+    baseQuery.companyName = companyName;
+  }
+  if (tags) {
+    baseQuery.articleTags = { $in: tags.split(',') }
+  }
+
+  try {
+    const suggestions = await Article.find(baseQuery, { score: { $meta: 'textScore' }, title: 1 })
+      .sort({ score: { $meta: 'textScore' } })
+      .limit(5);
+
+    res.json(suggestions);
+  } catch (error) {
+    console.error('Error searching for suggestions:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 module.exports = router;
