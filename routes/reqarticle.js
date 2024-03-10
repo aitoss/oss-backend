@@ -32,6 +32,7 @@ router.post('/reqarticle', async (req, res, next) => {
   const { requesterName, requesteeName, requesteeContact, company, note } = req.body;
   const createReqarticle = new Reqarticle({
     requesterName,
+    requesterEmailId,
     requesteeName,
     requesteeContact,
     company,
