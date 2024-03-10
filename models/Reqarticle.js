@@ -15,7 +15,6 @@ const reqArticleSchema = new mongoose.Schema({
   },
   requesterEmailId:{
     type: String,
-    required: true,
   },
   company: {
     type: String,
