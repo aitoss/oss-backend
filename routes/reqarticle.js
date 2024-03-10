@@ -43,7 +43,7 @@ router.post('/reqarticle', async (req, res, next) => {
     res.status(201).json({ message: 'Request created successfully', createReqarticle });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: 'Server Error' } , error);
   }
 });
 
