@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Article = require('../../models/Article');
 
-// @route  GET /api/anubhav/blogs
+// @route  GET /api/anubhav/blogs?useLatest=true
 // @desc   get all blogs
 // @access public
 router.get('/blogs', async (req, res) => {
