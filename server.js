@@ -23,7 +23,7 @@ app.use('/api/anubhav/', require('./routes/feedbacks'));
 app.use('/api/anubhav/', require('./routes/companies'));
 app.use('/api/anubhav/', require('./routes/reqarticle'));
 app.use('/api/anubhav/', require('./routes/writeArticle'));
-app.use('/api/anubhav/', require('./routes/auth'));
+app.use('/api/anubhav/', require('./test/auth'));
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}`));
