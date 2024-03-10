@@ -28,10 +28,11 @@ router.get('/reqarticle', async (req, res, next) =>{
 //     "note": "dev test remove later"
 // }
 
-router.post('/reqarticle', async (req, res, next) =>{
-  const {requesterName, requesteeName, requesteeContact, company, note} = req.body;
+router.post('/reqarticle', async (req, res, next) => {
+  const { requesterName, requesteeName, requesteeContact, company, note , requesterEmailId} = req.body;
   const createReqarticle = new Reqarticle({
     requesterName,
+    requesterEmailId,
     requesteeName,
     requesteeContact,
     company,
@@ -40,10 +41,12 @@ router.post('/reqarticle', async (req, res, next) =>{
 
   try {
     await createReqarticle.save();
+    res.status(201).json({ message: 'Request created successfully', createReqarticle });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: 'Server Error' , error});
   }
-  res.status(201).json({createReqarticle});
 });
+
 
 module.exports = router;
