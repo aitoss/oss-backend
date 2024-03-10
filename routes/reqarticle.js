@@ -29,7 +29,7 @@ router.get('/reqarticle', async (req, res, next) =>{
 // }
 
 router.post('/reqarticle', async (req, res, next) => {
-  const { requesterName, requesteeName, requesteeContact, company, note } = req.body;
+  const { requesterName, requesteeName, requesteeContact, company, note , requesterEmailId} = req.body;
   const createReqarticle = new Reqarticle({
     requesterName,
     requesterEmailId,
