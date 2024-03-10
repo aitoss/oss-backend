@@ -21,26 +21,18 @@ router.get('/tags', async (req, res) => {
 // gets all the tags used in the articles, so users can get tags suggestions
 router.get('/companies', async (req, res) => {
     try {
-        const { query } = req.query;
+        const companies = await Article.distinct('companyName');
 
-        let companies;
+        // Filter companies based on the query
+        const filteredCompanies = companies.filter(company => company.toLowerCase().startsWith(req.query.query.toLowerCase()));
 
-        if (query) {
-            // If a query is provided, filter companies based on the query
-            companies = await Article.distinct('companyName', {
-                companyName: { $regex: new RegExp(query, 'i') }
-            });
-        } else {
-            // If no query is provided, fetch all distinct companies
-            companies = await Article.distinct('companyName');
-        }
-
-        res.json(companies);
+        res.json(filteredCompanies);
     } catch (error) {
         console.error('Error fetching companies:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 
 module.exports = router;
