@@ -67,5 +67,39 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// @route  POST /api/anubhav/blogs
+// { 
+//   "title": "heheh", 
+//   "article": "mera blog" , 
+//   "role": "Internship",
+//   "articleTags": ["1","2"], 
+//   "companyName": "FYLE", 
+//   "authorName": "HArshal PAtil", 
+//   "authorEmailId": "2@gmail.com" 
+// }
+
+router.post('/blogs', async (req, res) => {
+  const { title, article, role, articleTags, companyName, authorName, authorEmailId } = req.body;
+
+  const createArticle = new Article({
+    title,
+    companyName,
+    description: article,
+    typeOfArticle: role,
+    articleTags,
+    author: {
+      name: authorName,
+      contact: authorEmailId
+    }
+  });
+
+  try {
+    await createArticle.save();
+    res.status(201).json({ message: 'Article created successfully', createArticle });
+  } catch (error) {
+    console.error('Error creating article:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 module.exports = router;
