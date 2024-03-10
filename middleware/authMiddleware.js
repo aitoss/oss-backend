@@ -1,6 +1,8 @@
 const admin = require('../config/firebaseConfig');
 
+// Middleware class for handling authentication
 class Middleware {
+    // Method to decode and verify the token
     async decodeToken(req, res, next) {
         const token = req.headers.authorization?.split(' ')[1];
 
