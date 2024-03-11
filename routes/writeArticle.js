@@ -22,11 +22,7 @@ router.get('/tags', async (req, res) => {
 router.get('/companies', async (req, res) => {
     try {
         const companies = await Article.distinct('companyName');
-
-        // Filter companies based on the query
-        const filteredCompanies = companies.filter(company => company.toLowerCase().startsWith(req.query.query.toLowerCase()));
-
-        res.json(filteredCompanies);
+        res.json(companies);
     } catch (error) {
         console.error('Error fetching companies:', error);
         res.status(500).json({ message: 'Internal server error' });
