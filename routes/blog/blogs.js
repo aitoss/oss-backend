@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Article = require('../../models/Article');
 const multer = require('multer');
+const cors = require('cors');
 const app = express();
 
 app.use(cors({
