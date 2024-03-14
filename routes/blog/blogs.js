@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Article = require('../../models/Article');
+const multer = require('multer');
 
 // @route  GET /api/anubhav/blogs?useLatest=true
 // @desc   get all blogs
@@ -78,8 +79,21 @@ router.get('/search', async (req, res) => {
 //   "authorEmailId": "2@gmail.com" 
 // }
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname)
+  }
+});
+
+const upload = multer({ storage: storage });
+
 router.post('/blogs', async (req, res) => {
   const { title, article, role, articleTags, companyName, authorName, authorEmailId } = req.body;
+
+  const imageUrl = req.file.path;
 
   const createArticle = new Article({
     title,
@@ -90,7 +104,8 @@ router.post('/blogs', async (req, res) => {
     author: {
       name: authorName,
       contact: authorEmailId
-    }
+    },
+    imageUrl: imageUrl
   });
 
   try {

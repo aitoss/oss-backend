@@ -53,6 +53,10 @@ const articleSchema = new mongoose.Schema({
       required: [true, 'Please provide a point of contact (any social medial URLs) !'],
     },
   },
+  imageUrl: {
+    type: String,
+    required: [true, 'Please provide a Image URL'],
+  },
 });
 
 module.exports = mongoose.model('Article', articleSchema);
