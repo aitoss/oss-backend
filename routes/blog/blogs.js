@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const Article = require('../../models/Article');
 const multer = require('multer');
+const app = express();
+
+app.use(cors({
+  origin:'*'
+}))
 
 // @route  GET /api/anubhav/blogs?useLatest=true
 // @desc   get all blogs
@@ -79,19 +84,26 @@ router.get('/search', async (req, res) => {
 //   "authorEmailId": "2@gmail.com" 
 // }
 
+// Multer configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/')
+    cb(null, 'uploads/');
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    cb(null, file.originalname);
   }
 });
 
 const upload = multer({ storage: storage });
 
-router.post('/blogs', async (req, res) => {
+// POST route with Multer middleware for file uploads
+router.post('/blogs', upload.single('image'), async (req, res) => {
   const { title, article, role, articleTags, companyName, authorName, authorEmailId } = req.body;
+
+  // Checking if file is uploaded
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image uploaded' });
+  }
 
   const imageUrl = req.file.path;
 
@@ -116,5 +128,6 @@ router.post('/blogs', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 module.exports = router;
