@@ -29,7 +29,7 @@ router.get('/blogs', async (req, res) => {
   }
 });
 
-// @route  GET /api/anubhav/blogs/:id
+// @route  GET /api/anubhav/blog/:id
 // @desc   get a single blog by its ID
 // @access public
 router.get('/blog/:index', async (req, res) => {
@@ -54,7 +54,6 @@ router.get('/search', async (req, res) => {
   const tags = req.query.tags;
 
   const baseQuery = { $text: { $search: query } };
-
   if (companyName) {
     baseQuery.companyName = companyName;
   }
@@ -63,7 +62,7 @@ router.get('/search', async (req, res) => {
   }
 
   try {
-    const suggestions = await Article.find(baseQuery, { score: { $meta: 'textScore' }, title: 1 })
+    const suggestions = await Article.find(baseQuery, { score: { $meta: 'textScore' }})
       .sort({ score: { $meta: 'textScore' } })
       .limit(5);
 
