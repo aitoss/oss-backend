@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Article = require('../../models/Article');
-const multer = require('multer');
+// const multer = require('multer');
 const cors = require('cors');
 const app = express();
 
@@ -85,42 +85,40 @@ router.get('/search', async (req, res) => {
 // }
 
 // Multer configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  }
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'uploads/');
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname);
+//   }
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
 // POST route with Multer middleware for file uploads
-router.post('/blogs', upload.single('image'), async (req, res) => {
-  const { title, article, role, articleTags, companyName, authorName, authorEmailId } = req.body;
+router.post('/blogs', async (req, res) => {
+  const { title, article, role, articleTags, companyName, authorName, authorEmailId, image } = req.body;
 
-  // Checking if file is uploaded
-  if (!req.file) {
-    return res.status(400).json({ message: 'No image uploaded' });
+  // Check if image data is provided
+  if (!image) {
+    return res.status(400).json({ message: 'No image provided' });
   }
 
-  const imageUrl = req.file.path;
-
-  const createArticle = new Article({
-    title,
-    companyName,
-    description: article,
-    typeOfArticle: role,
-    articleTags,
-    author: {
-      name: authorName,
-      contact: authorEmailId
-    },
-    imageUrl: imageUrl
-  });
-
   try {
+    const createArticle = new Article({
+      title,
+      companyName,
+      description: article,
+      typeOfArticle: role,
+      articleTags,
+      author: {
+        name: authorName,
+        contact: authorEmailId
+      },
+      imageUrl: image 
+    });
+
     await createArticle.save();
     res.status(201).json({ message: 'Article created successfully', createArticle });
   } catch (error) {
