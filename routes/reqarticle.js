@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const Reqarticle= require('../models/Reqarticle');
+const Reqarticle = require('../models/Reqarticle');
 
 // @route  GET /api/anubhav/getreqarticle
 // @desc   get getreqarticle
@@ -9,9 +9,9 @@ const Reqarticle= require('../models/Reqarticle');
 // @desc   post rearticle
 // @access public
 
-router.get('/reqarticle', async (req, res, next) =>{
+router.get('/reqarticle', async (req, res, next) => {
   try {
-    const reqarticle= await Reqarticle.find();
+    const reqarticle = await Reqarticle.find();
     res.json(reqarticle);
   } catch (error) {
     console.log(error);
@@ -29,7 +29,14 @@ router.get('/reqarticle', async (req, res, next) =>{
 // }
 
 router.post('/reqarticle', async (req, res, next) => {
-  const { requesterName, requesteeName, requesteeContact, company, note , requesterEmailId} = req.body;
+  const {
+    requesterName,
+    requesteeName,
+    requesteeContact,
+    company,
+    note,
+    requesterEmailId,
+  } = req.body;
   const createReqarticle = new Reqarticle({
     requesterName,
     requesterEmailId,
@@ -41,12 +48,13 @@ router.post('/reqarticle', async (req, res, next) => {
 
   try {
     await createReqarticle.save();
-    res.status(201).json({ message: 'Request created successfully', createReqarticle });
+    res
+        .status(201)
+        .json({message: 'Request created successfully', createReqarticle});
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Server Error' , error});
+    res.status(500).json({message: 'Server Error', error});
   }
 });
-
 
 module.exports = router;

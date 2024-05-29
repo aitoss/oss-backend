@@ -5,9 +5,11 @@ const Article = require('../../models/Article');
 const cors = require('cors');
 const app = express();
 
-app.use(cors({
-  origin:'*'
-}))
+app.use(
+    cors({
+      origin: '*',
+    }),
+);
 
 // @route  GET /api/anubhav/blogs?useLatest=true
 // @desc   get all blogs
@@ -17,7 +19,9 @@ router.get('/blogs', async (req, res) => {
     const useLatest = req.query.useLatest === 'true';
 
     if (useLatest) {
-      const latestArticles = await Article.find().sort({createdAt: -1}).limit(5);
+      const latestArticles = await Article.find()
+          .sort({createdAt: -1})
+          .limit(5);
       res.json(latestArticles);
     } else {
       const blogs = await Article.find({}).sort({createdAt: -1}).limit(10);
@@ -53,35 +57,37 @@ router.get('/search', async (req, res) => {
   const companyName = req.query.company;
   const tags = req.query.tags;
 
-  const baseQuery = { $text: { $search: query } };
+  const baseQuery = {$text: {$search: query}};
   if (companyName) {
     baseQuery.companyName = companyName;
   }
   if (tags) {
-    baseQuery.articleTags = { $in: tags.split(',') }
+    baseQuery.articleTags = {$in: tags.split(',')};
   }
 
   try {
-    const suggestions = await Article.find(baseQuery, { score: { $meta: 'textScore' }})
-      .sort({ score: { $meta: 'textScore' } })
-      .limit(5);
+    const suggestions = await Article.find(baseQuery, {
+      score: {$meta: 'textScore'},
+    })
+        .sort({score: {$meta: 'textScore'}})
+        .limit(5);
 
     res.json(suggestions);
   } catch (error) {
     console.error('Error searching for suggestions:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({message: 'Internal server error'});
   }
 });
 
 // @route  POST /api/anubhav/blogs
-// { 
-//   "title": "heheh", 
-//   "article": "mera blog" , 
+// {
+//   "title": "heheh",
+//   "article": "mera blog" ,
 //   "role": "Internship",
-//   "articleTags": ["1","2"], 
-//   "companyName": "FYLE", 
-//   "authorName": "HArshal PAtil", 
-//   "authorEmailId": "2@gmail.com" 
+//   "articleTags": ["1","2"],
+//   "companyName": "FYLE",
+//   "authorName": "HArshal PAtil",
+//   "authorEmailId": "2@gmail.com"
 // }
 
 // Multer configuration
@@ -98,11 +104,20 @@ router.get('/search', async (req, res) => {
 
 // POST route with Multer middleware for file uploads
 router.post('/blogs', async (req, res) => {
-  const { title, article, role, articleTags, companyName, authorName, authorEmailId, image } = req.body;
+  const {
+    title,
+    article,
+    role,
+    articleTags,
+    companyName,
+    authorName,
+    authorEmailId,
+    image,
+  } = req.body;
 
   // Check if image data is provided
   if (!image) {
-    return res.status(400).json({ message: 'No image provided' });
+    return res.status(400).json({message: 'No image provided'});
   }
 
   try {
@@ -114,18 +129,19 @@ router.post('/blogs', async (req, res) => {
       articleTags,
       author: {
         name: authorName,
-        contact: authorEmailId
+        contact: authorEmailId,
       },
-      imageUrl: image 
+      imageUrl: image,
     });
 
     await createArticle.save();
-    res.status(201).json({ message: 'Article created successfully', createArticle });
+    res
+        .status(201)
+        .json({message: 'Article created successfully', createArticle});
   } catch (error) {
     console.error('Error creating article:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({message: 'Internal server error'});
   }
 });
-
 
 module.exports = router;

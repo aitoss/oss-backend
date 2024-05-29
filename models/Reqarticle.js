@@ -13,7 +13,7 @@ const reqArticleSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  requesterEmailId:{
+  requesterEmailId: {
     type: String,
   },
   company: {
