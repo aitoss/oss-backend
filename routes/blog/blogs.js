@@ -54,6 +54,27 @@ router.get('/blog/:index', async (req, res) => {
 // @access public
 router.get('/search', async (req, res) => {
   const query = req.query.q;
+
+  const baseQuery = {$text: {$search: query}};
+
+  try {
+    const suggestions = await Article.find(baseQuery, {
+      score: {$meta: 'textScore'},
+    })
+        .sort({score: {$meta: 'textScore'}})
+
+    res.json(suggestions);
+  } catch (error) {
+    console.error('Error searching for suggestions:', error);
+    res.status(500).json({message: 'Internal server error'});
+  }
+});
+
+// @route  GET /api/anubhav/search
+// @desc   implement search and filters
+// @access public
+router.get('/similarBlogs', async (req, res) => {
+  const query = req.query.q;
   const companyName = req.query.company;
   const tags = req.query.tags;
 
