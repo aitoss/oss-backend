@@ -7,6 +7,10 @@ const { v4: uuid } = require('uuid');
 const cors = require('cors');
 const app = express();
 
+const client = algoliasearch('TECKNOOFBW', 'f6fe142af541c3fd4d51d48d626d2252')
+
+const index = client.initIndex('blog_name');
+
 app.use(
     cors({
       origin: '*',
