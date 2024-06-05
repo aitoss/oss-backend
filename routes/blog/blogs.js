@@ -44,7 +44,6 @@ router.get('/startMigration', async (req, res) => {
     try {
         //mongoose.connect('mongodb://admin:password@localhost:27017/ANUBHAV-AITOSS', { useNewUrlParser: true, useUnifiedTopology: true });
         const articleSchema = new mongoose.Schema({
-            id: String,
             title: String,
             typeOfArticle: String,
             companyName: String,
