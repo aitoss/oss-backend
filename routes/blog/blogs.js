@@ -54,19 +54,31 @@ router.get('/blog/:index', async (req, res) => {
 // @access public
 router.get('/search', async (req, res) => {
   const query = req.query.q;
+  const companyName = req.query.company;
+  const tags = req.query.tags;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
 
-  const baseQuery = {$text: {$search: query}};
+  const baseQuery = { $text: { $search: query } };
+  if (companyName) {
+    baseQuery.companyName = companyName;
+  }
+  if (tags) {
+    baseQuery.articleTags = { $in: tags.split(',') };
+  }
 
   try {
-    const suggestions = await Article.find(baseQuery, {
-      score: {$meta: 'textScore'},
-    })
-        .sort({score: {$meta: 'textScore'}})
+    const totalArticles = await Article.countDocuments(baseQuery);
+    const articles = await Article.find(baseQuery, { score: { $meta: 'textScore' } })
+      .sort({ score: { $meta: 'textScore' } })
+      .skip(skip)
+      .limit(limit);
 
-    res.json(suggestions);
+    res.json({ totalArticles, articles });
   } catch (error) {
     console.error('Error searching for suggestions:', error);
-    res.status(500).json({message: 'Internal server error'});
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
