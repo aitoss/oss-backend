@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Article = require('../../models/Article');
-// const multer = require('multer');
+const multer = require('multer');
 const cors = require('cors');
 const app = express();
 
@@ -10,6 +10,13 @@ app.use(
       origin: '*',
     }),
 );
+
+// Using memory storage to keep the file in memory
+const storage = multer.memoryStorage(); 
+const upload = multer({ storage: storage });
+require('dotenv').config();
+app.use(express.json());
+
 
 // @route  GET /api/anubhav/blogs?useLatest=true
 // @desc   get all blogs
@@ -135,6 +142,28 @@ router.get('/similarBlogs', async (req, res) => {
 
 // const upload = multer({ storage: storage });
 
+// Image upload route
+router.post('/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    const formData = new FormData();
+    formData.append('image', req.file.buffer.toString('base64'));
+
+    const response = await axios.post(
+      `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ error: 'Error uploading image' });
+  }
+});
 // POST route with Multer middleware for file uploads
 router.post('/blogs', async (req, res) => {
   const {
