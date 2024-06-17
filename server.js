@@ -8,6 +8,7 @@ require('dotenv').config();
 
 const app = express();
 connectDB();
+app.use(express.json({}));
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -20,7 +21,12 @@ app.use(session({
 }));
 app.use(cors());
 app.use('/public', express.static('public'));
-
+// @route  GET home/:name
+// @desc   home page render
+// @access private
+app.get('/', (req, res) => {
+  res.send('home');
+});
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
