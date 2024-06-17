@@ -10,6 +10,12 @@ const app = express();
 connectDB();
 app.use(express.json({}));
 
+app.use(
+  cors({
+    origin: 'https://anubhav-frontend-23.vercel.app/',
+  }),
+);
+
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -19,14 +25,15 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false }
 }));
-app.use(cors());
 app.use('/public', express.static('public'));
+
 // @route  GET home/:name
 // @desc   home page render
 // @access private
 app.get('/', (req, res) => {
   res.send('home');
 });
+
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
