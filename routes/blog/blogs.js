@@ -4,7 +4,8 @@ const Article = require('../../models/Article');
 const multer = require('multer');
 const cors = require('cors');
 const app = express();
-
+const axios = require('axios');
+const FormData = require('form-data');
 app.use(
     cors({
       origin: '*',
@@ -142,25 +143,32 @@ router.get('/similarBlogs', async (req, res) => {
 
 // const upload = multer({ storage: storage });
 // Image upload route
-router.post('/upload-image', upload.single('image'), async (req, res) => {
+// POST /api/upload-image
+router.post('/upload-image', async (req, res) => {
   try {
+    const { image } = req.body;
+
+    if (!image) {
+      return res.status(400).json({ error: 'No image data provided' });
+    }
+
     const formData = new FormData();
-    formData.append('image', req.file.buffer.toString('base64'));
+    formData.append('image', image);
 
-    const response = await axios.post(
-      `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
-      formData,
-      {
-        headers: {
-          ...formData.getHeaders(),
-        },
-      }
-    );
+    const imgBBResponse = await axios.post('https://api.imgbb.com/1/upload', formData, {
+      headers: {
+        ...formData.getHeaders(),
+        'Content-Type': 'multipart/form-data',
+      },
+      params: {
+        key: process.env.IMGBB_API_KEY, 
+      },
+    });
 
-    res.json(response.data);
+    res.json(imgBBResponse.data);
   } catch (error) {
-    console.error('Error uploading image:', error);
-    res.status(500).json({ error: 'Error uploading image' });
+    console.error('Error uploading image to ImgBB:', error);
+    res.status(500).json({ error: 'Failed to upload image' });
   }
 });
 // POST route with Multer middleware for file uploads

@@ -8,14 +8,13 @@ require('dotenv').config();
 
 const app = express();
 connectDB();
-app.use(express.json({}));
+app.use(express.json());
 
 app.use(
   cors({
     origin: '*',
   }),
 );
-
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -27,6 +26,14 @@ app.use(session({
   cookie: { secure: false }
 }));
 app.use('/public', express.static('public'));
+
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+  );
+  next();
+});
 
 // @route  GET home/:name
 // @desc   home page render
