@@ -141,7 +141,6 @@ router.get('/similarBlogs', async (req, res) => {
 // });
 
 // const upload = multer({ storage: storage });
-
 // Image upload route
 router.post('/upload-image', upload.single('image'), async (req, res) => {
   try {
@@ -153,7 +152,7 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          ...formData.getHeaders(),
         },
       }
     );
