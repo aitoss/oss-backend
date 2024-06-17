@@ -12,9 +12,10 @@ app.use(express.json({}));
 
 app.use(
   cors({
-    origin: 'https://anubhav-frontend-23.vercel.app/',
+    origin: '*',
   }),
 );
+
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
