@@ -50,7 +50,10 @@ const articleSchema = new mongoose.Schema({
     },
     contact: {
       type: String,
-      required: [true, 'Please provide a point of contact (any social medial URLs) !'],
+      required: [
+        true,
+        'Please provide a point of contact (any social medial URLs) !',
+      ],
     },
   },
   imageUrl: {

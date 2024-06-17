@@ -2,7 +2,7 @@ const express = require('express');
 
 const router = express.Router();
 
-const Feedback= require('../models/Feedback');
+const Feedback = require('../models/Feedback');
 
 // @route  GET /api/anubhav/getfeedbacks
 // @desc   get getfeedback
@@ -10,16 +10,16 @@ const Feedback= require('../models/Feedback');
 // @desc   post feedback
 // @access public
 
-router.get('/feedbacks', async (req, res, next) =>{
+router.get('/feedbacks', async (req, res, next) => {
   try {
-    const feedback= await Feedback.find({}).sort({createdAt: -1});
+    const feedback = await Feedback.find({}).sort({createdAt: -1});
     res.json(feedback);
   } catch (error) {
     console.log(error);
   }
 });
 
-router.post('/feedbacks', async (req, res, next) =>{
+router.post('/feedbacks', async (req, res, next) => {
   const {feedback, rating, createdAt} = req.body;
 
   const createFeedback = new Feedback({

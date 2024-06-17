@@ -5,9 +5,18 @@ const multer = require('multer');
 const cors = require('cors');
 const app = express();
 
-app.use(cors({
-  origin:'*'
-}))
+app.use(
+    cors({
+      origin: '*',
+    }),
+);
+
+// Using memory storage to keep the file in memory
+const storage = multer.memoryStorage(); 
+const upload = multer({ storage: storage });
+require('dotenv').config();
+app.use(express.json());
+
 
 // @route  GET /api/anubhav/blogs?useLatest=true
 // @desc   get all blogs
@@ -17,7 +26,9 @@ router.get('/blogs', async (req, res) => {
     const useLatest = req.query.useLatest === 'true';
 
     if (useLatest) {
-      const latestArticles = await Article.find().sort({createdAt: -1}).limit(5);
+      const latestArticles = await Article.find()
+          .sort({createdAt: -1})
+          .limit(5);
       res.json(latestArticles);
     } else {
       const blogs = await Article.find({}).sort({createdAt: -1}).limit(10);
@@ -29,7 +40,7 @@ router.get('/blogs', async (req, res) => {
   }
 });
 
-// @route  GET /api/anubhav/blogs/:id
+// @route  GET /api/anubhav/blog/:id
 // @desc   get a single blog by its ID
 // @access public
 router.get('/blog/:index', async (req, res) => {
@@ -52,83 +63,147 @@ router.get('/search', async (req, res) => {
   const query = req.query.q;
   const companyName = req.query.company;
   const tags = req.query.tags;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
 
   const baseQuery = { $text: { $search: query } };
-
   if (companyName) {
     baseQuery.companyName = companyName;
   }
   if (tags) {
-    baseQuery.articleTags = { $in: tags.split(',') }
+    baseQuery.articleTags = { $in: tags.split(',') };
   }
 
   try {
-    const suggestions = await Article.find(baseQuery, { score: { $meta: 'textScore' }, title: 1 })
+    const totalArticles = await Article.countDocuments(baseQuery);
+    const articles = await Article.find(baseQuery, { score: { $meta: 'textScore' } })
       .sort({ score: { $meta: 'textScore' } })
-      .limit(5);
+      .skip(skip)
+      .limit(limit);
 
-    res.json(suggestions);
+    res.json({ totalArticles, articles });
   } catch (error) {
     console.error('Error searching for suggestions:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
+// @route  GET /api/anubhav/search
+// @desc   implement search and filters
+// @access public
+router.get('/similarBlogs', async (req, res) => {
+  const query = req.query.q;
+  const companyName = req.query.company;
+  const tags = req.query.tags;
+
+  const baseQuery = {$text: {$search: query}};
+  if (companyName) {
+    baseQuery.companyName = companyName;
+  }
+  if (tags) {
+    baseQuery.articleTags = {$in: tags.split(',')};
+  }
+
+  try {
+    const suggestions = await Article.find(baseQuery, {
+      score: {$meta: 'textScore'},
+    })
+        .sort({score: {$meta: 'textScore'}})
+        .limit(5);
+
+    res.json(suggestions);
+  } catch (error) {
+    console.error('Error searching for suggestions:', error);
+    res.status(500).json({message: 'Internal server error'});
+  }
+});
+
 // @route  POST /api/anubhav/blogs
-// { 
-//   "title": "heheh", 
-//   "article": "mera blog" , 
+// {
+//   "title": "heheh",
+//   "article": "mera blog" ,
 //   "role": "Internship",
-//   "articleTags": ["1","2"], 
-//   "companyName": "FYLE", 
-//   "authorName": "HArshal PAtil", 
-//   "authorEmailId": "2@gmail.com" 
+//   "articleTags": ["1","2"],
+//   "companyName": "FYLE",
+//   "authorName": "HArshal PAtil",
+//   "authorEmailId": "2@gmail.com"
 // }
 
 // Multer configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'uploads/');
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname);
+//   }
+// });
+
+// const upload = multer({ storage: storage });
+
+// Image upload route
+router.post('/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    const formData = new FormData();
+    formData.append('image', req.file.buffer.toString('base64'));
+
+    const response = await axios.post(
+      `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ error: 'Error uploading image' });
   }
 });
-
-const upload = multer({ storage: storage });
-
 // POST route with Multer middleware for file uploads
-router.post('/blogs', upload.single('image'), async (req, res) => {
-  const { title, article, role, articleTags, companyName, authorName, authorEmailId } = req.body;
-
-  // Checking if file is uploaded
-  if (!req.file) {
-    return res.status(400).json({ message: 'No image uploaded' });
-  }
-
-  const imageUrl = req.file.path;
-
-  const createArticle = new Article({
+router.post('/blogs', async (req, res) => {
+  const {
     title,
-    companyName,
-    description: article,
-    typeOfArticle: role,
+    article,
+    role,
     articleTags,
-    author: {
-      name: authorName,
-      contact: authorEmailId
-    },
-    imageUrl: imageUrl
-  });
+    companyName,
+    authorName,
+    authorEmailId,
+    image,
+  } = req.body;
+
+  // Check if image data is provided
+  if (!image) {
+    return res.status(400).json({message: 'No image provided'});
+  }
 
   try {
+    const createArticle = new Article({
+      title,
+      companyName,
+      description: article,
+      typeOfArticle: role,
+      articleTags,
+      author: {
+        name: authorName,
+        contact: authorEmailId,
+      },
+      imageUrl: image,
+    });
+
     await createArticle.save();
-    res.status(201).json({ message: 'Article created successfully', createArticle });
+    res
+        .status(201)
+        .json({message: 'Article created successfully', createArticle});
   } catch (error) {
     console.error('Error creating article:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({message: 'Internal server error'});
   }
 });
-
 
 module.exports = router;
