@@ -106,6 +106,9 @@ router.get('/companies', async (req, res) => {
   }
 });
 
+// @route  GET /api/anubhav/countCompanies
+// @desc   Get the companies and there count with logo
+// @access public
 router.get("/countCompanies", async (req,res)=>{
   try{
     const allCompanies = await Article.find({ isAuthentic: true }).sort({ companyName: 1 });
@@ -123,9 +126,9 @@ router.get("/countCompanies", async (req,res)=>{
       }
       if (!isCompanyFound) {
           data.push({
-              company,
-              domainName,
-              count: 1
+            company,
+            domainName,
+            count: 1,
           });
       }
   });
