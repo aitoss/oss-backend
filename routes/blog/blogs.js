@@ -90,6 +90,57 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// @route  GET /api/anubhav/companies?company=Microsoft
+// @desc Get company articles
+router.get('/companies', async (req, res) => {
+  const companyName = req.query.company;
+  console.log("here", companyName);
+
+  try {
+    const totalArticles = await Article.countDocuments({ companyName: companyName });
+    const articles = await Article.find({ companyName: companyName });
+    res.json({ totalArticles, articles });
+  } catch (error) {
+    console.error('Error searching for suggestions:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get("/countCompanies", async (req,res)=>{
+  try{
+    const allCompanies = await Article.find({ isAuthentic: true }).sort({ companyName: 1 });
+    const data = [];
+    allCompanies.forEach((article) => {
+      let company = article.companyName;
+      let domainName = article.companyDomainName;
+      let isCompanyFound = false;
+      for (let d of data) {
+          if (d.company === company) {
+              isCompanyFound = true;
+              d.count++;
+              break;
+          }
+      }
+      if (!isCompanyFound) {
+          data.push({
+              company,
+              domainName,
+              count: 1
+          });
+      }
+  });
+
+  return res.status(200).json({
+    success: true,
+    data,
+  });
+
+  } catch (error) {
+    console.error('Error searching for suggestions:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
 // @route  GET /api/anubhav/search
 // @desc   implement search and filters
 // @access public
