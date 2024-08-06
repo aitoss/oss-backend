@@ -92,7 +92,7 @@ router.get('/search', async (req, res) => {
 
 // @route  GET /api/anubhav/companies?company=Microsoft
 // @desc Get company articles
-router.get('/companies', async (req, res) => {
+router.get('/getCompany', async (req, res) => {
   const companyName = req.query.company;
   console.log("here", companyName);
 
