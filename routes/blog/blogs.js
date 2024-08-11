@@ -22,19 +22,26 @@ app.use(express.json());
 // @route  GET /api/anubhav/blogs?useLatest=true
 // @desc   get all blogs
 // @access public
-router.get('/blogs', async (req, res) => {
+router.get("/blogs", async (req, res) => {
   try {
     const useLatest = req.query.useLatest === 'true';
+    const page = parseInt(req.query.page) || 1;
+    const limit = 1; 
 
+    const query = {};
     if (useLatest) {
-      const latestArticles = await Article.find()
-          .sort({createdAt: -1})
-          .limit(5);
-      res.json(latestArticles);
-    } else {
-      const blogs = await Article.find({}).sort({createdAt: -1}).limit(10);
-      res.json(blogs);
+      query.sort = { createdAt: -1 };
     }
+
+    const articles = await Article.find(query)
+      .sort(query.sort)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    // Check if there are more articles
+    const hasMore = articles.length === limit;
+
+    res.json({ articles, hasMore });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

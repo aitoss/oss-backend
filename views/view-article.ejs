@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Article Details</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    .article-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .article-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+    }
+
+    .article-title {
+      font-size: 24px;
+      margin: 10px 0;
+    }
+
+    .article-info {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    .article-description {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #007bff;
+      border: 1px solid #007bff;
+      padding: 10px 15px;
+      border-radius: 5px;
+    }
+
+    .back-link:hover {
+      background-color: #007bff;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="article-container">
+    <img src="<%= article.imageUrl %>" alt="Article Image" class="article-image">
+    <h1 class="article-title"><%= article.title %></h1>
+    <p class="article-info">Created At: <%= new Date(article.createdAt).toLocaleDateString() %></p>
+    <p class="article-description"><%= article.description %></p>
+    
+    <form action="/admin/update-authentic/<%= article._id %>" method="post">
+      <button type="submit" class="authentic-button <%= article.isAuthentic ? 'true' : 'false' %>">
+        <%= article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic' %>
+      </button>
+    </form>
+
+    <a href="/admin/home" class="back-link">Back to Admin Page</a>
+  </div>
+</body>
+</html>

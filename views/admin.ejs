@@ -4,9 +4,102 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Page</title>
+  <style>
+    .load-more-button {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+
+    .load-more-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-  <h1>Welcome to the admin page</h1>
+  <h1>Welcome to the Admin Page</h1>
+  <ul class="article-list">
+    <% if (articles.length > 0) { %>
+      <% articles.forEach(article => { %>
+        <li class="article-item">
+          <!-- <img src="<%= article.imageUrl %>" alt="Article Image" class="article-image"> -->
+          <h2 class="article-title"><%= article.title %></h2>
+          <p class="article-info">Created At: <%= new Date(article.createdAt).toLocaleDateString() %></p>
+          <a href="/admin/view-article/<%= article._id %>" class="view-details-button">View Details</a>
+          
+          <form action="/admin/update-authentic/<%= article._id %>" method="post">
+            <button type="submit" class="authentic-button <%= article.isAuthentic ? 'true' : 'false' %>">
+              <%= article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic' %>
+            </button>
+          </form>
+        </li>
+      <% }) %>
+    <% } else { %>
+      <p>No articles available.</p>
+    <% } %>
+  </ul>
+  
+  <!-- Load More Button -->
+  <button id="load-more" class="load-more-button">Load More</button>
+
   <a href="/admin/logout">Logout</a>
-</body>
-</html>
+
+  <% if (typeof error !== 'undefined') { %>
+    <p class="error-message"><%= error %></p>
+  <% } %>
+
+  <script>
+    let currentPage = 1;
+    const limit = 5; 
+  
+    document.getElementById('load-more').addEventListener('click', () => {
+      currentPage += 1;
+      fetch(`/blogs?page=${currentPage}&useLatest=true`)
+        .then(response => response.json())
+        .then(data => {
+          const { articles, hasMore } = data;
+  
+          if (articles.length > 0) {
+            const articleList = document.querySelector('.article-list');
+            articles.forEach(article => {
+              const articleItem = document.createElement('li');
+              articleItem.className = 'article-item';
+              articleItem.innerHTML = `
+                <!-- <img src="${article.imageUrl}" alt="Article Image" class="article-image"> -->
+                <h2 class="article-title">${article.title}</h2>
+                <p class="article-info">Created At: ${new Date(article.createdAt).toLocaleDateString()}</p>
+                <a href="/admin/view-article/${article._id}" class="view-details-button">View Details</a>
+                <form action="/admin/update-authentic/${article._id}" method="post">
+                  <button type="submit" class="authentic-button ${article.isAuthentic ? 'true' : 'false'}">
+                    ${article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic'}
+                  </button>
+                </form>
+              `;
+              articleList.appendChild(articleItem);
+            });
+  
+            // Hide the "Load More" button if no more articles are available
+            if (!hasMore) {
+              document.getElementById('load-more').style.display = 'none';
+              document.getElementById('no-more-articles').style.display = 'block';
+            }
+          } else {
+            // If no articles are returned, hide the "Load More" button
+            document.getElementById('load-more').style.display = 'none';
+            document.getElementById('no-more-articles').style.display = 'block';
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching articles:', error);
+        });
+    });
+  </script>
+  
