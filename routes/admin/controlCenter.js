@@ -68,7 +68,7 @@ router.post("/update-authentic/:id", requireAuth, async (req, res) => {
 router.get("/home", requireAuth, async (req, res) => {
   try {
     // Adjust the URL to include query parameters if needed
-    const response = await fetch(`http://localhost:3000/api/anubhav/blogs?useLatest=false&page=1`);
+    const response = await fetch(`${BACKEND_URL}/blogs?useLatest=false&page=1`);
     
     // Check if the response is OK
     if (!response.ok) {
