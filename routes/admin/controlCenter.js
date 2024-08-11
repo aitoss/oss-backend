@@ -7,7 +7,7 @@ const fetch = require("node-fetch");
 require("dotenv").config();
 
 const router = express.Router();
-const BACKEND_URL = 'http://localhost:3000/api/anubhav';
+const BACKEND_URL = 'https://oss-backend.vercel.app/api/anubhav'; // todo - to be put in env
 
 // Login route
 router.get("/login", (req, res) => {
