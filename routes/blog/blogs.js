@@ -26,7 +26,7 @@ router.get("/blogs", async (req, res) => {
   try {
     const useLatest = req.query.useLatest === 'true';
     const page = parseInt(req.query.page) || 1;
-    const limit = 1; 
+    const limit = 5; // Number of articles per page
 
     const query = {};
     if (useLatest) {
@@ -34,6 +34,7 @@ router.get("/blogs", async (req, res) => {
     }
 
     const articles = await Article.find(query)
+      .sort({ createdAt: -1 })
       .sort(query.sort)
       .skip((page - 1) * limit)
       .limit(limit);
@@ -47,6 +48,8 @@ router.get("/blogs", async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+
 
 // @route  GET /api/anubhav/blog/:id
 // @desc   get a single blog by its ID

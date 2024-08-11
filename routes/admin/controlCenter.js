@@ -67,16 +67,29 @@ router.post("/update-authentic/:id", requireAuth, async (req, res) => {
 // Admin route
 router.get("/home", requireAuth, async (req, res) => {
   try {
-    // const useLatest = false;
-    const response = await fetch(`${BACKEND_URL}/blogs`);
-    const articles = await response.json();
-    // console.log(articles);
-    res.render("admin", { articles });
+    // Adjust the URL to include query parameters if needed
+    const response = await fetch(`http://localhost:3000/api/anubhav/blogs?useLatest=false&page=1`);
+    
+    // Check if the response is OK
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    // Parse the JSON response
+    const data = await response.json();
+
+    // Extract only the articles and hasMore
+    const { articles, hasMore } = data;
+
+    // Render the view with articles and hasMore
+    res.render("admin", { articles, hasMore });
   } catch (error) {
     console.error("Error fetching articles:", error);
-    res.render("admin", { articles: [], error: "Failed to load articles" });
+    res.render("admin", { articles: [], hasMore: false, error: "Failed to load articles" });
   }
 });
+
+
 
 // Logout route
 router.get("/logout", (req, res) => {

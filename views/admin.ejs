@@ -1,10 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Page</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .article-list {
+      list-style: none;
+      padding: 0;
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    .article-item {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      padding: 20px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .article-item:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .article-title {
+      margin: 0 0 10px;
+      font-size: 1.5em;
+    }
+
+    .article-info {
+      font-size: 0.9em;
+      color: #666;
+      margin: 0 0 10px;
+    }
+
+    .view-details-button {
+      display: inline-block;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+
+    .view-details-button:hover {
+      background-color: #0056b3;
+    }
+
+    .authentic-button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #28a745;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .authentic-button.false {
+      background-color: #dc3545;
+    }
+
+    .authentic-button.false:hover {
+      background-color: #c82333;
+    }
+
+    .authentic-button.true:hover {
+      background-color: #218838;
+    }
+
     .load-more-button {
       display: block;
       margin: 20px auto;
@@ -22,8 +104,21 @@
     .load-more-button:hover {
       background-color: #0056b3;
     }
+
+    .error-message {
+      color: #dc3545;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #no-more-articles {
+      text-align: center;
+      margin: 20px auto;
+      color: #666;
+    }
   </style>
 </head>
+
 <body>
   <h1>Welcome to the Admin Page</h1>
   <ul class="article-list">
@@ -34,7 +129,7 @@
           <h2 class="article-title"><%= article.title %></h2>
           <p class="article-info">Created At: <%= new Date(article.createdAt).toLocaleDateString() %></p>
           <a href="/admin/view-article/<%= article._id %>" class="view-details-button">View Details</a>
-          
+
           <form action="/admin/update-authentic/<%= article._id %>" method="post">
             <button type="submit" class="authentic-button <%= article.isAuthentic ? 'true' : 'false' %>">
               <%= article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic' %>
@@ -46,27 +141,33 @@
       <p>No articles available.</p>
     <% } %>
   </ul>
-  
-  <!-- Load More Button -->
+
   <button id="load-more" class="load-more-button">Load More</button>
 
-  <a href="/admin/logout">Logout</a>
+  <a href="/admin/logout" class="view-details-button">Logout</a>
 
   <% if (typeof error !== 'undefined') { %>
     <p class="error-message"><%= error %></p>
   <% } %>
 
+  <p id="no-more-articles" style="display: none;">No more articles to load.</p>
+
   <script>
     let currentPage = 1;
-    const limit = 5; 
-  
+    const limit = 5;
+
     document.getElementById('load-more').addEventListener('click', () => {
       currentPage += 1;
-      fetch(`/blogs?page=${currentPage}&useLatest=true`)
-        .then(response => response.json())
+      fetch(`/api/anubhav/blogs?page=${currentPage}&useLatest=true`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then(data => {
           const { articles, hasMore } = data;
-  
+
           if (articles.length > 0) {
             const articleList = document.querySelector('.article-list');
             articles.forEach(article => {
@@ -85,21 +186,29 @@
               `;
               articleList.appendChild(articleItem);
             });
-  
-            // Hide the "Load More" button if no more articles are available
+
             if (!hasMore) {
-              document.getElementById('load-more').style.display = 'none';
-              document.getElementById('no-more-articles').style.display = 'block';
+              const loadMoreButton = document.getElementById('load-more');
+              const noMoreArticles = document.getElementById('no-more-articles');
+              if (loadMoreButton) loadMoreButton.style.display = 'none';
+              if (noMoreArticles) noMoreArticles.style.display = 'block';
             }
           } else {
-            // If no articles are returned, hide the "Load More" button
-            document.getElementById('load-more').style.display = 'none';
-            document.getElementById('no-more-articles').style.display = 'block';
+            const loadMoreButton = document.getElementById('load-more');
+            const noMoreArticles = document.getElementById('no-more-articles');
+            if (loadMoreButton) loadMoreButton.style.display = 'none';
+            if (noMoreArticles) noMoreArticles.style.display = 'block';
           }
         })
         .catch(error => {
           console.error('Error fetching articles:', error);
+          const loadMoreButton = document.getElementById('load-more');
+          const noMoreArticles = document.getElementById('no-more-articles');
+          if (loadMoreButton) loadMoreButton.style.display = 'none';
+          if (noMoreArticles) noMoreArticles.style.display = 'block';
         });
     });
   </script>
-  
+</body>
+
+</html>
