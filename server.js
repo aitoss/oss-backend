@@ -4,6 +4,7 @@ const cors = require('cors');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
+const status = require('express-status-monitor');
 require('dotenv').config();
 
 const app = express();

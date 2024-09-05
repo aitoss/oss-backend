@@ -55,6 +55,8 @@
     .back-link:hover {
       background-color: #007bff;
       color: #fff;
+      background-color: #007bff;
+      color: #fff;
     }
   </style>
 </head>
@@ -63,8 +65,7 @@
     <img src="<%= article.imageUrl %>" alt="Article Image" class="article-image">
     <h1 class="article-title"><%= article.title %></h1>
     <p class="article-info">Created At: <%= new Date(article.createdAt).toLocaleDateString() %></p>
-    <p class="article-description"><%= article.description %></p>
-    
+    <p class="article-description"><%- article.description %></p>
     <form action="/admin/update-authentic/<%= article._id %>" method="post">
       <button type="submit" class="authentic-button <%= article.isAuthentic ? 'true' : 'false' %>">
         <%= article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic' %>
