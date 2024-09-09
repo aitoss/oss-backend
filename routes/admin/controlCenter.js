@@ -83,6 +83,24 @@ router.get("/home", requireAuth, async (req, res) => {
   }
 });
 
+// Get requestArticle route
+router.get("/reqArticle", requireAuth, async (req, res) => {
+  const useLatest = req.query.useLatest || 'false';
+  const page = req.query.page || '1';
+  try {
+    const response = await fetch(`${BACKEND_URL}/reqarticle?useLatest=${useLatest}&page=${page}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const reqarticle = await response.json();
+
+    res.render("reqarticle", { reqarticle });
+  } catch (error) {
+    console.error("Error fetching request articles:", error);
+    res.render("reqarticle", { reqarticle: [], error: "Failed to load request articles" });
+  }
+});
 
 
 // Logout route
