@@ -28,7 +28,7 @@ router.get("/blogs", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 5; // Number of articles per page
 
-    const query = {};
+    const query = { isAuthentic: true };
     if (useLatest) {
       query.sort = { createdAt: -1 };
     }
@@ -59,6 +59,14 @@ router.get('/blog/:index', async (req, res) => {
     const index = req.params.index;
 
     const blog = await Article.findById(index);
+
+    if (!blog) {
+      return res.status(404).json({ msg: 'Blog not found' });
+    }
+
+    if (!blog.isAuthentic) {
+      return res.status(403).json({ msg: 'Blog is not authentic' });
+    }
 
     res.json(blog);
   } catch (err) {
@@ -162,7 +170,7 @@ router.get('/similarBlogs', async (req, res) => {
   const companyName = req.query.company;
   const tags = req.query.tags;
 
-  const baseQuery = {$text: {$search: query}};
+  const baseQuery = {$text: {$search: query},};
   if (companyName) {
     baseQuery.companyName = companyName;
   }
