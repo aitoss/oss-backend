@@ -66,7 +66,7 @@ router.post("/update-authentic/:id", requireAuth, async (req, res) => {
 // Admin route
 router.get("/home", requireAuth, async (req, res) => {
   try {
-    const response = await fetch(`${BACKEND_URL}/blogs?useLatest=false&page=1`);
+    const response = await fetch(`${BACKEND_URL}/articles?useLatest=false&page=1`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);

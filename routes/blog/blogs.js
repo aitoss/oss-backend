@@ -28,7 +28,38 @@ router.get("/blogs", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 5; // Number of articles per page
 
-    const query = { };
+    const query = { isAuthentic: true };
+    if (useLatest) {
+      query.sort = { createdAt: -1 };
+    }
+
+    const articles = await Article.find(query)
+      .sort({ createdAt: -1 })
+      .sort(query.sort)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    // Check if there are more articles
+    const hasMore = articles.length === limit;
+
+    res.json({ articles, hasMore });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route  GET /api/anubhav/articles?useLatest=true
+// @desc   get all blogs
+// @access private
+// control center route
+router.get("/articles", async (req, res) => {
+  try {
+    const useLatest = req.query.useLatest === 'true';
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5; // Number of articles per page
+
+    const query = {};
     if (useLatest) {
       query.sort = { createdAt: -1 };
     }
