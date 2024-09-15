@@ -28,7 +28,7 @@ router.get("/blogs", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 5; // Number of articles per page
 
-    const query = { isAuthentic: true };
+    const query = { };
     if (useLatest) {
       query.sort = { createdAt: -1 };
     }
