@@ -19,7 +19,6 @@
       background-color: #fff;
       padding: 20px;
       border-radius: 5px;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     }
 
     .article-image {
@@ -49,13 +48,11 @@
       justify-content: space-between;
     }
     .back-link {
-      width: 130px;
       font-size: 14px;
       margin-top: 20px;
       margin-bottom: 20px;
-      text-decoration: none;
+      text-decoration: underline;
       color: #007bff;
-      border: 1px solid #007bff;
       padding: 4px 8px;
       border-radius: 5px;
     }
@@ -70,7 +67,7 @@
     }
 
     .authentic-button.true {
-      background-color: #28a745;
+      background-color: #f6465d;
       color: #fff;
     }
 
@@ -85,14 +82,7 @@
     }
 
     .authentic-button.true:hover {
-      background-color: #218838;
-    }
-
-    .back-link:hover {
-      background-color: #007bff;
-      color: #fff;
-      background-color: #007bff;
-      color: #fff;
+      background-color: #c82333;
     }
   </style>
 </head>
@@ -100,7 +90,7 @@
   <div class="article-container">
     <div class="flex">
 
-      <a href="/admin/home" class="back-link">Back to Admin Page</a>
+      <a href="/admin/home" class="back-link">← Back to Admin Page</a>
       <form action="/admin/update-authentic/<%= article._id %>" method="post">
         <button type="submit" class="authentic-button <%= article.isAuthentic ? 'true' : 'false' %>">
           <%= article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic' %>
