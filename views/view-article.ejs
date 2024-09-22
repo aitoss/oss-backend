@@ -12,6 +12,8 @@
     }
 
     .article-container {
+      display: flex;
+      flex-direction: column;
       max-width: 800px;
       margin: 0 auto;
       background-color: #fff;
@@ -41,15 +43,49 @@
       font-size: 16px;
       line-height: 1.6;
     }
-
+    .flex{
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
     .back-link {
-      display: inline-block;
+      width: 130px;
+      font-size: 14px;
       margin-top: 20px;
+      margin-bottom: 20px;
       text-decoration: none;
       color: #007bff;
       border: 1px solid #007bff;
+      padding: 4px 8px;
+      border-radius: 5px;
+    }
+    .authentic-button{
+      margin-top: 20px;
+      text-decoration: none;
+      font-size: 16px;
+      cursor: pointer;
+      border: 0px solid #007bff;
       padding: 10px 15px;
       border-radius: 5px;
+    }
+
+    .authentic-button.true {
+      background-color: #28a745;
+      color: #fff;
+    }
+
+    .authentic-button.false {
+      background-color: #0ecb81;
+      color: #fff;
+    }
+
+    .authentic-button.false:hover {
+      background-color: #11b073;
+      color: #fff;
+    }
+
+    .authentic-button.true:hover {
+      background-color: #218838;
     }
 
     .back-link:hover {
@@ -62,16 +98,23 @@
 </head>
 <body>
   <div class="article-container">
+    <div class="flex">
+
+      <a href="/admin/home" class="back-link">Back to Admin Page</a>
+      <form action="/admin/update-authentic/<%= article._id %>" method="post">
+        <button type="submit" class="authentic-button <%= article.isAuthentic ? 'true' : 'false' %>">
+          <%= article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic' %>
+        </button>
+      </form>
+    </div>
     <img src="<%= article.imageUrl %>" alt="Article Image" class="article-image">
     <h1 class="article-title"><%= article.title %></h1>
     <p class="article-info">Created At: <%= new Date(article.createdAt).toLocaleDateString() %></p>
+    <p class="article-info">Created by: <%= article.author.name %></p>
+    <p class="article-info">Gmail: <%= article.author.contact %></p>
+    <p class="article-info">Type: <%= article.typeOfArticle %></p>
+    <p class="article-info">Company Name: <%= article.companyName %></p>
     <p class="article-description"><%- article.description %></p>
-    <form action="/admin/update-authentic/<%= article._id %>" method="post">
-      <button type="submit" class="authentic-button <%= article.isAuthentic ? 'true' : 'false' %>">
-        <%= article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic' %>
-      </button>
-    </form>
-    <a href="/admin/home" class="back-link">Back to Admin Page</a>
   </div>
 </body>
 </html>
