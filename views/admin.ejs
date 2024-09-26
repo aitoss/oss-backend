@@ -131,11 +131,16 @@
       align-items: center;
       justify-content: space-between;
     }
+    .text-center{
+      
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
   <h1>Welcome to the Admin Page</h1>
+  <a href="/admin/reqarticle" class="view-details-button text-center">Go to Request Page</a>
   <a href="/admin/logout" class="view-details-button right-0">Logout</a>
   <ul class="article-list">
     <% if (articles.length > 0) { %>

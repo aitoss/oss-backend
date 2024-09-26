@@ -2,6 +2,7 @@ const express = require("express");
 const { adminPasswordHash, adminEmail } = require("../../constants");
 const requireAuth = require("../../middleware/requireAuth");
 const Article = require("../../models/Article");
+const Reqarticle = require("../../models/Reqarticle"); // Import the Reqarticle model
 const bcrypt = require("bcrypt");
 const fetch = require("node-fetch");
 require("dotenv").config();
@@ -42,7 +43,6 @@ router.get("/view-article/:id", requireAuth, async (req, res) => {
     res.redirect("/admin/home");
   }
 });
-
 
 router.post("/update-authentic/:id", requireAuth, async (req, res) => {
   try {
@@ -102,6 +102,23 @@ router.get("/reqArticle", requireAuth, async (req, res) => {
   }
 });
 
+// DELETE request to remove a specific request article by ID
+router.delete("/reqArticle/:id", requireAuth, async (req, res) => {
+  try {
+    const reqArticleId = req.params.id;
+    const reqarticle = await Reqarticle.findById(reqArticleId);
+
+    if (!reqarticle) {
+      return res.status(404).json({ message: 'Request article not found' });
+    }
+
+    await reqarticle.remove();
+    res.status(200).json({ message: 'Request article deleted successfully' });
+  } catch (error) {
+    console.error("Error deleting request article:", error);
+    res.status(500).json({ message: 'Failed to delete request article', error });
+  }
+});
 
 // Logout route
 router.get("/logout", (req, res) => {
