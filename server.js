@@ -5,12 +5,24 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
 const status = require('express-status-monitor');
+const rateLimit = require("express-rate-limit");
+
 require('dotenv').config();
 
-const app = express();
-connectDB();
-app.use(express.json());
+// Apply rate limiting to all requests
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 500, // Limit each IP to 500 requests per minute (as student on collage wifi share the same public IP address)
+  message: "Too many requests, please try again later.",
+  headers: true,
+});
 
+const app = express();
+
+connectDB();
+
+app.use(express.json());
+app.use(limiter);
 app.use(
   cors({
     origin: '*',
