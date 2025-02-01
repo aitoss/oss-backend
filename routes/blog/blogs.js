@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { LRUCache } = require('lru-cache')
 const Article = require('../../models/Article');
 const multer = require('multer');
 const cors = require('cors');
@@ -11,6 +12,8 @@ app.use(
       origin: '*',
     }),
 );
+
+const cache = new LRUCache({ max: 100, maxAge: 60000*60*24 });
 
 // Using memory storage to keep the file in memory
 const storage = multer.memoryStorage(); 
@@ -89,6 +92,11 @@ router.get('/blog/:index', async (req, res) => {
   try {
     const index = req.params.index;
 
+    if (cache.has(index)) {
+      console.log(`Serving blog ${index} from cache`);
+      return res.json(cache.get(index)); // Return cached blog data
+    }
+
     const blog = await Article.findById(index);
 
     if (!blog) {
@@ -98,7 +106,7 @@ router.get('/blog/:index', async (req, res) => {
     if (!blog.isAuthentic) {
       return res.status(403).json({ msg: 'Blog is not authentic' });
     }
-
+    cache.set(index, blog);
     res.json(blog);
   } catch (err) {
     console.error(err.message);
