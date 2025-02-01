@@ -4,11 +4,33 @@ const router = express.Router();
 
 const Feedback = require('../models/Feedback');
 
-// @route  GET /api/anubhav/getfeedbacks
-// @desc   get getfeedback
-// @route POST /api/anubhav/feedbacks
-// @desc   post feedback
-// @access public
+
+/**
+ * @swagger
+ * /api/anubhav/feedbacks:
+ *   get:
+ *     summary: Get all feedbacks
+ *     tags: [Feedback]
+ *     responses:
+ *       200:
+ *         description: List of all feedbacks sorted by creation date
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   feedback:
+ *                     type: string
+ *                   rating:
+ *                     type: number
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *       500:
+ *         description: Internal server error
+ */
 
 router.get('/feedbacks', async (req, res, next) => {
   try {
@@ -18,6 +40,52 @@ router.get('/feedbacks', async (req, res, next) => {
     console.log(error);
   }
 });
+
+
+/**
+ * @swagger
+ * /api/anubhav/feedbacks:
+ *   post:
+ *     summary: Submit a new feedback
+ *     tags: [Feedback]
+ *     parameters:
+ *       - in: body
+ *         name: feedback
+ *         description: Feedback details
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             feedback:
+ *               type: string
+ *               description: Feedback content
+ *             rating:
+ *               type: number
+ *               description: Rating given in feedback (1-5)
+ *             createdAt:
+ *               type: string
+ *               format: date-time
+ *               description: Feedback creation timestamp
+ *     responses:
+ *       201:
+ *         description: Feedback submitted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 feedback:
+ *                   type: string
+ *                 rating:
+ *                   type: number
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Bad request, missing or invalid data
+ *       500:
+ *         description: Internal server error
+ */
 
 router.post('/feedbacks', async (req, res, next) => {
   const {feedback, rating, createdAt} = req.body;

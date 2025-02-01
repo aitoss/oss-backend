@@ -1,132 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <style>
-      body {
-        font-family: Inter, Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        padding: 4px;
-        background-color: #f4f4f4;
-      }
 
-      h1 {
-        text-align: center;
-        color: #333;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Inter, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 4px;
+      background-color: #f4f4f4;
+    }
 
-      form {
-        padding: 20px;
-        border-radius: 5px;
-        max-width: 300px;
-        width: 100%;
-      }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
 
-      .input-group {
-        position: relative;
-        width: 100%;
-        margin: 10px 0;
-      }
+    form {
+      padding: 20px;
+      border-radius: 5px;
+      max-width: 300px;
+      width: 100%;
+    }
 
-      input {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        outline: none;
-        border-radius: 8px;
-        box-sizing: border-box;
-      }
+    .input-group {
+      position: relative;
+      width: 100%;
+      margin: 10px 0;
+    }
 
-      input:focus {
-        border-color: #aaa;
-      }
+    input {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      outline: none;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
 
-      .toggle-password {
-        position: absolute;
-        user-select: none;
-        -moz-user-select: none;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        color: #aaa;
-      }
+    input:focus {
+      border-color: #aaa;
+    }
 
-      button {
-        font-size: 1rem;
-        width: 100%;
-        padding: 10px;
-        background-color: #212121;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
+    .toggle-password {
+      position: absolute;
+      user-select: none;
+      -moz-user-select: none;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #aaa;
+    }
 
-      button:hover {
-        background-color: #292929;
-      }
+    button {
+      font-size: 1rem;
+      width: 100%;
+      padding: 10px;
+      background-color: #212121;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
 
-      p {
-        color: red;
-        text-align: center;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Admin Login</h1>
-    <form action="/admin/login" method="post">
-      <div class="input-group">
-        <input type="email" name="email" placeholder="Email" required />
+    button:hover {
+      background-color: #292929;
+    }
+
+    p {
+      color: red;
+      text-align: center;
+    }
+
+    .alert {
+      margin: 20px 0;
+      border-radius: 4px;
+      padding: 10px 20px;
+      background-color: #f44336;
+      color: white;
+      margin-bottom: 15px;
+    }
+
+    .closebtn {
+      margin-left: 15px;
+      color: white;
+      font-weight: bold;
+      float: right;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .closebtn:hover {
+      color: black;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Admin Login</h1>
+  <form action="/admin/login" method="post">
+    <div class="input-group">
+      <input type="email" name="email" placeholder="Email" required />
+    </div>
+    <div class="input-group">
+      <input type="password" id="password" name="password" placeholder="Password" required />
+      <span class="toggle-password" onclick="togglePassword()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="lucide lucide-eye">
+          <path
+            d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      </span>
+    </div>
+    <button type="submit">Login</button>
+
+    <% if (typeof error !=="undefined" ) { %>
+      <div class="alert">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+        <%= error %>
       </div>
-      <div class="input-group">
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Password"
-          required
-        />
-        <span class="toggle-password" onclick="togglePassword()">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-eye"
-          >
-            <path
-              d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
-            />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-        </span>
-      </div>
-      <button type="submit">Login</button>
-    </form>
+      <% } %>
+  </form>
 
-    <script>
-      function togglePassword() {
-        const passwordInput = document.getElementById("password");
-        const type =
-          passwordInput.getAttribute("type") === "password"
-            ? "text"
-            : "password";
-        passwordInput.setAttribute("type", type);
-      }
-    </script>
-  </body>
+  <script>
+    function togglePassword() {
+      const passwordInput = document.getElementById("password");
+      const type =
+        passwordInput.getAttribute("type") === "password"
+          ? "text"
+          : "password";
+      passwordInput.setAttribute("type", type);
+    }
+  </script>
+</body>
+
 </html>

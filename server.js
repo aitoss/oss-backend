@@ -5,12 +5,28 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
 const status = require('express-status-monitor');
+
+const rateLimit = require("express-rate-limit");
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocs = require('./swaggerConfig');
+
 require('dotenv').config();
 
-const app = express();
-connectDB();
-app.use(express.json());
+// Apply rate limiting to all requests
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 500, // Limit each IP to 500 requests per minute (as student on collage wifi share the same public IP address)
+  message: "Too many requests, please try again later.",
+  headers: true,
+});
 
+const app = express();
+
+connectDB();
+
+app.use(express.json());
+app.set('trust proxy', 1); // Makes vercel work with express-rate-limit
+app.use(limiter);
 app.use(
   cors({
     origin: '*',
@@ -27,6 +43,9 @@ app.use(session({
   cookie: { secure: false }
 }));
 app.use('/public', express.static('public'));
+
+// Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use((req, res, next) => {
   res.setHeader(
