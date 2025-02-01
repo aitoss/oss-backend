@@ -90,50 +90,58 @@
   <h1>Requested Articles</h1>
   <a href="/admin/home" class="view-details-button text-center">Go to Home</a>
   <ul class="req-article-list">
-    <% if (reqarticle.length > 0) { %>
-      <% reqarticle.forEach(article => { %>
+    <% if (reqarticle.length> 0) { %>
+      <% reqarticle.forEach(article=> { %>
         <li class="req-article-item">
-          <p class="req-article-info">Requester: <%= article.requesterName %></p>
-          <p class="req-article-info">Requester EmailID: <%= article.requesterEmailId %></p>
-          <p class="req-article-info">Requestee: <%= article.requesteeName %></p>
-          <p class="req-article-info">Contact: <%= article.requesteeContact %></p>
-          <p class="req-article-info">Company: <%= article.company %></p>
-          <p class="req-article-info">Note: <%= article.note %></p>
+          <p class="req-article-info">Requester: <%= article.requesterName %>
+          </p>
+          <p class="req-article-info">Requester EmailID: <%= article.requesterEmailId %>
+          </p>
+          <p class="req-article-info">Requestee: <%= article.requesteeName %>
+          </p>
+          <p class="req-article-info">Contact: <%= article.requesteeContact %>
+          </p>
+          <p class="req-article-info">Company: <%= article.company %>
+          </p>
+          <p class="req-article-info">Note: <%= article.note %>
+          </p>
         </li>
-      <% }) %>
-    <% } else { %>
-      <p>No requested articles available.</p>
-    <% } %>
+        <% }) %>
+          <% } else { %>
+            <p>No requested articles available.</p>
+            <% } %>
   </ul>
 
-  <% if (typeof error !== 'undefined') { %>
-    <p class="error-message"><%= error %></p>
-  <% } %>
+  <% if (typeof error !=='undefined' ) { %>
+    <p class="error-message">
+      <%= error %>
+    </p>
+    <% } %>
 
-  <p id="no-more-articles" style="display: none;">No more articles to load.</p>
-  <div id="load-more">Load more articles</div>
+      <p id="no-more-articles" style="display: none;">No more articles to load.</p>
+      <div id="load-more">Load more articles</div>
 
-  <script>
-    let currentPage = 1;
-    const limit = 5;
+      <script>
+        let currentPage = 1;
+        const limit = 5;
 
-    document.getElementById('load-more').addEventListener('click', () => {
-      currentPage += 1;
-      fetch(`/reqArticle?page=${currentPage}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          const { reqarticle, hasMore } = data;
-          if (reqarticle.length > 0) {
-            const reqArticleList = document.querySelector('.req-article-list');
-            reqarticle.forEach(article => {
-              const reqArticleItem = document.createElement('li');
-              reqArticleItem.className = 'req-article-item';
-              reqArticleItem.innerHTML = `
+        document.getElementById('load-more').addEventListener('click', () => {
+          currentPage += 1;
+          fetch(`/reqArticle?page=${currentPage}`)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => {
+              const { reqarticle, hasMore } = data;
+              if (reqarticle.length > 0) {
+                const reqArticleList = document.querySelector('.req-article-list');
+                reqarticle.forEach(article => {
+                  const reqArticleItem = document.createElement('li');
+                  reqArticleItem.className = 'req-article-item';
+                  reqArticleItem.innerHTML = `
                 <p class="req-article-info">Requester: ${article.requesterName}</p>
                 <p class="req-article-info">Requestee: ${article.requesteeName}</p>
                 <p class="req-article-info">Contact: ${article.requesteeContact}</p>
@@ -141,25 +149,25 @@
                 <p class="req-article-info">Note: ${article.note}</p>
                 <a href="/admin/view-req-article/${article._id}" class="view-details-button">View Details</a>
               `;
-              reqArticleList.appendChild(reqArticleItem);
-            });
+                  reqArticleList.appendChild(reqArticleItem);
+                });
 
-            if (!hasMore) {
+                if (!hasMore) {
+                  document.getElementById('load-more').style.display = 'none';
+                  document.getElementById('no-more-articles').style.display = 'block';
+                }
+              } else {
+                document.getElementById('load-more').style.display = 'none';
+                document.getElementById('no-more-articles').style.display = 'block';
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching requested articles:', error);
               document.getElementById('load-more').style.display = 'none';
               document.getElementById('no-more-articles').style.display = 'block';
-            }
-          } else {
-            document.getElementById('load-more').style.display = 'none';
-            document.getElementById('no-more-articles').style.display = 'block';
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching requested articles:', error);
-          document.getElementById('load-more').style.display = 'none';
-          document.getElementById('no-more-articles').style.display = 'block';
+            });
         });
-    });
-  </script>
+      </script>
 </body>
 
 </html>
