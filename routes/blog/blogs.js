@@ -22,9 +22,34 @@ require('dotenv').config();
 app.use(express.json());
 
 
-// @route  GET /api/anubhav/blogs?useLatest=true
-// @desc   get all blogs
-// @access public
+/**
+ * @swagger
+ * /api/anubhav/blogs:
+ *   get:
+ *     summary: Get a list of blogs
+ *     tags: [Blogs]
+ *     description: Retrieve blogs with pagination and optional sorting by latest
+ *     parameters:
+ *       - in: query
+ *         name: useLatest
+ *         description: Whether to sort blogs by the most recent
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: page
+ *         description: The page number to fetch
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the blogs
+ *       500:
+ *         description: Server error
+ */
+
 router.get("/blogs", async (req, res) => {
   try {
     const useLatest = req.query.useLatest === 'true';
@@ -52,10 +77,34 @@ router.get("/blogs", async (req, res) => {
   }
 });
 
-// @route  GET /api/anubhav/articles?useLatest=true
-// @desc   get all blogs
-// @access private
-// control center route
+/**
+ * @swagger
+ * /api/anubhav/articles:
+ *   get:
+ *     summary: Get a list of articles (Admin)
+ *     tags: [Blogs]
+ *     description: Retrieve articles with pagination and optional sorting by latest
+ *     parameters:
+ *       - in: query
+ *         name: useLatest
+ *         description: Whether to sort articles by the most recent
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: page
+ *         description: The page number to fetch
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the articles
+ *       500:
+ *         description: Server error
+ */
+
 router.get("/articles", async (req, res) => {
   try {
     const useLatest = req.query.useLatest === 'true';
@@ -84,10 +133,31 @@ router.get("/articles", async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/anubhav/blog/{id}:
+ *   get:
+ *     summary: Get a single blog by its ID
+ *     tags: [Blogs]
+ *     description: Retrieve a single blog post by its unique ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: The ID of the blog post
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the blog
+ *       404:
+ *         description: Blog not found
+ *       403:
+ *         description: Blog is not authentic
+ *       500:
+ *         description: Server error
+ */
 
-// @route  GET /api/anubhav/blog/:id
-// @desc   get a single blog by its ID
-// @access public
 router.get('/blog/:index', async (req, res) => {
   try {
     const index = req.params.index;
@@ -114,9 +184,53 @@ router.get('/blog/:index', async (req, res) => {
   }
 });
 
-// @route  GET /api/anubhav/search
-// @desc   implement search and filters
-// @access public
+
+/**
+ * @swagger
+ * /api/anubhav/search:
+ *   get:
+ *     summary: Search blogs with filters
+ *     description: Search for blogs by query, company name, or tags with pagination
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         description: The search query term
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: company
+ *         description: Filter blogs by company name
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: tags
+ *         description: Filter blogs by tags (comma separated)
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         description: The page number to fetch
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         description: The number of blogs per page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved search results
+ *       500:
+ *         description: Server error
+ */
+
 router.get('/search', async (req, res) => {
   const query = req.query.q;
   const companyName = req.query.company;
@@ -147,8 +261,28 @@ router.get('/search', async (req, res) => {
   }
 });
 
-// @route  GET /api/anubhav/companies?company=Microsoft
-// @desc Get company articles
+
+/**
+ * @swagger
+ * /api/anubhav/getCompany:
+ *   get:
+ *     summary: Get company articles by company name
+ *     tags: [Content]
+ *     description: Retrieve articles for a specific company
+ *     parameters:
+ *       - in: query
+ *         name: company
+ *         description: The company name to fetch articles for
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the company articles
+ *       500:
+ *         description: Server error
+ */
+
 router.get('/getCompany', async (req, res) => {
   const companyName = req.query.company;
   console.log("here", companyName);
@@ -163,9 +297,19 @@ router.get('/getCompany', async (req, res) => {
   }
 });
 
-// @route  GET /api/anubhav/countCompanies
-// @desc   Get the companies and there count with logo
-// @access public
+/**
+ * @swagger
+ * /api/anubhav/countCompanies:
+ *   get:
+ *     summary: Get the count of companies and their logos
+ *     description: Retrieve a list of companies with their article count and logo
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved company counts
+ *       500:
+ *         description: Server error
+ */
+
 router.get("/countCompanies", async (req,res)=>{
   try{
     const allCompanies = await Article.find({ isAuthentic: true }).sort({ companyName: 1 });
@@ -201,9 +345,39 @@ router.get("/countCompanies", async (req,res)=>{
   }
 })
 
-// @route  GET /api/anubhav/search
-// @desc   implement search and filters
-// @access public
+/**
+ * @swagger
+ * /api/anubhav/similarBlogs:
+ *   get:
+ *     summary: Get similar blogs based on search query
+ *     tags: [Blogs]
+ *     description: Retrieve similar blogs based on search query, company name, or tags
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         description: The search query term
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: company
+ *         description: Filter blogs by company name
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: tags
+ *         description: Filter blogs by tags (comma separated)
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved similar blogs
+ *       500:
+ *         description: Server error
+ */
+
 router.get('/similarBlogs', async (req, res) => {
   const query = req.query.q;
   const companyName = req.query.company;
@@ -253,8 +427,31 @@ router.get('/similarBlogs', async (req, res) => {
 // });
 
 // const upload = multer({ storage: storage });
-// Image upload route
-// POST /api/upload-image
+
+
+/**
+ * @swagger
+ * /api/anubhav/upload-image:
+ *   post:
+ *     summary: Upload an image
+ *     description: Upload an image to an external service (ImgBB)
+ *     parameters:
+ *       - in: body
+ *         name: image
+ *         description: The image to upload
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: binary
+ *     responses:
+ *       200:
+ *         description: Successfully uploaded the image
+ *       400:
+ *         description: No image data provided
+ *       500:
+ *         description: Server error
+ */
+
 router.post('/upload-image', async (req, res) => {
   try {
     const { image } = req.body;
@@ -282,7 +479,50 @@ router.post('/upload-image', async (req, res) => {
     res.status(500).json({ error: 'Failed to upload image' });
   }
 });
-// POST route with Multer middleware for file uploads
+
+/**
+ * @swagger
+ * /api/anubhav/blogs:
+ *   post:
+ *     summary: Create a new blog post
+ *     tags: [Blogs]
+ *     description: Create a new blog post with provided details
+ *     parameters:
+ *       - in: body
+ *         name: blog
+ *         description: The blog details to create
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             title:
+ *               type: string
+ *             article:
+ *               type: string
+ *             role:
+ *               type: string
+ *             articleTags:
+ *               type: array
+ *               items:
+ *                 type: string
+ *             companyName:
+ *               type: string
+ *             authorName:
+ *               type: string
+ *             authorEmailId:
+ *               type: string
+ *             image:
+ *               type: string
+ *               format: binary
+ *     responses:
+ *       201:
+ *         description: Successfully created the blog
+ *       400:
+ *         description: No image provided
+ *       500:
+ *         description: Server error
+ */
+
 router.post('/blogs', async (req, res) => {
   const {
     title,

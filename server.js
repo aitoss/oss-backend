@@ -5,7 +5,10 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
 const status = require('express-status-monitor');
+
 const rateLimit = require("express-rate-limit");
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocs = require('./swaggerConfig');
 
 require('dotenv').config();
 
@@ -39,6 +42,9 @@ app.use(session({
   cookie: { secure: false }
 }));
 app.use('/public', express.static('public'));
+
+// Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use((req, res, next) => {
   res.setHeader(
