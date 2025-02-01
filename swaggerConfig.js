@@ -5,7 +5,7 @@ const swaggerOptions = {
     info: {
       title: 'Anubhav API',
       version: '1.0.0',
-      description: 'Description of your API.',
+      description: 'List of all the routes',
     },
     servers: [
       {

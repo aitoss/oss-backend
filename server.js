@@ -25,6 +25,7 @@ const app = express();
 connectDB();
 
 app.use(express.json());
+app.set('trust proxy', 1); // Makes vercel work with express-rate-limit
 app.use(limiter);
 app.use(
   cors({
