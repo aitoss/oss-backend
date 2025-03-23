@@ -1,6 +1,6 @@
 # oss-backend
 
-#### Run Server
+#### Run Server Locally
 ```
 npm run server
 ```
