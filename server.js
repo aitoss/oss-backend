@@ -59,7 +59,7 @@ app.use((req, res, next) => {
 // @desc   home page render
 // @access private
 app.get('/', (req, res) => {
-  res.send('home');
+  res.send('Staging Server is running');
 });
 
 // Set EJS as the view engine

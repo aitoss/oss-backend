@@ -6,7 +6,7 @@ dotenv.config();
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGOURI, {
-      dbName: 'ANUBHAV-AITOSS',
+      dbName: process.env.DB_NAME || 'ANUBHAV-AITOSS',
     });
     console.log('Connected to MongoDB');
   } catch (error) {
