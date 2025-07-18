@@ -9,8 +9,14 @@ const status = require('express-status-monitor');
 const rateLimit = require("express-rate-limit");
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocs = require('./swaggerConfig');
+const { allowedOrigins } = require('./constants');
+const supertokens = require("supertokens-node");
+const { middleware, errorHandler } = require("supertokens-node/framework/express");
+const EmailPassword = require("supertokens-node/recipe/emailpassword");
+const Session = require("supertokens-node/recipe/session");
 
 require('dotenv').config();
+require('./supertoken-config');
 
 // Apply rate limiting to all requests
 const limiter = rateLimit({
@@ -27,11 +33,22 @@ connectDB();
 app.use(express.json());
 app.set('trust proxy', 1); // Makes vercel work with express-rate-limit
 app.use(limiter);
-app.use(
-  cors({
-    origin: '*',
-  }),
-);
+
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    }
+  },
+  credentials: true,
+  allowedHeaders: ["content-type", ...supertokens.getAllCORSHeaders()],
+}));
+
+app.use(middleware());
+app.use(errorHandler());
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
