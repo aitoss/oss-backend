@@ -112,11 +112,29 @@ router.delete("/reqArticle/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'Request article not found' });
     }
 
-    await reqarticle.remove();
+    await Reqarticle.deleteOne({ _id: reqArticleId });
     res.status(200).json({ message: 'Request article deleted successfully' });
   } catch (error) {
     console.error("Error deleting request article:", error);
     res.status(500).json({ message: 'Failed to delete request article', error });
+  }
+});
+
+// DELETE request to remove a specific article by ID
+router.delete("/article/:id", requireAuth, async (req, res) => {
+  try {
+    const articleId = req.params.id;
+    const article = await Article.findById(articleId);
+
+    if (!article) {
+      return res.status(404).json({ message: 'Article not found' });
+    }
+
+    await Article.deleteOne({ _id: articleId });
+    res.status(200).json({ message: 'Article deleted successfully' });
+  } catch (error) {
+    console.error("Error deleting article:", error);
+    res.status(500).json({ message: 'Failed to delete article', error });
   }
 });
 
