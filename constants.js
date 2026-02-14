@@ -6,6 +6,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://anubhav.aitoss.club",
   "https://anubhav.aitoss.in",
+  "https://anubhav.ossclub.in",
 ];
 
 module.exports = { adminEmail, adminPasswordHash, allowedOrigins }
