@@ -49,6 +49,7 @@ const corsOptions = {
 };
 
 app.use('/api', cors(corsOptions));
+app.use('/auth', cors(corsOptions));
 app.use(middleware());
 app.use(errorHandler());
 

@@ -310,37 +310,18 @@ router.get('/getCompany', async (req, res) => {
  *         description: Server error
  */
 
-router.get("/countCompanies", async (req,res)=>{
-  try{
-    const allCompanies = await Article.find({ isAuthentic: true }).sort({ companyName: 1 });
-    const data = [];
-    allCompanies.forEach((article) => {
-      let company = article.companyName;
-      let domainName = article.companyDomainName;
-      let isCompanyFound = false;
-      for (let d of data) {
-          if (d.company === company) {
-              isCompanyFound = true;
-              d.count++;
-              break;
-          }
-      }
-      if (!isCompanyFound) {
-          data.push({
-            company,
-            domainName,
-            count: 1,
-          });
-      }
-  });
+router.get("/countCompanies", async (req, res) => {
+  try {
+    const data = await Article.aggregate([
+      { $match: { isAuthentic: true } },
+      { $group: { _id: "$companyName", domainName: { $first: "$companyDomainName" }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, company: "$_id", domainName: 1, count: 1 } },
+    ]);
 
-  return res.status(200).json({
-    success: true,
-    data,
-  });
-
+    return res.status(200).json({ success: true, data });
   } catch (error) {
-    console.error('Error searching for suggestions:', error);
+    console.error('Error fetching company counts:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 })
