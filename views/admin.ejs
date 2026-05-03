@@ -4,248 +4,299 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Page</title>
+  <title>Admin Panel</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
     body {
       font-family: Inter, Arial, sans-serif;
       margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
+      background: #f0f2f5;
+      color: #1a1a1a;
     }
 
-    h1 {
-      text-align: center;
-      margin-top: 20px;
+    nav {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    nav .brand {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    nav .nav-links {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #d0d0d0;
+      color: #333;
+    }
+
+    .btn-outline:hover { border-color: #999; background: #f9f9f9; }
+
+    .btn-danger { background: #e53935; color: #fff; }
+    .btn-danger:hover { background: #c62828; }
+
+    .btn-approve { background: #2e7d32; color: #fff; }
+    .btn-approve:hover { background: #1b5e20; }
+
+    .btn-revoke { background: #e53935; color: #fff; }
+    .btn-revoke:hover { background: #c62828; }
+
+    .container {
+      max-width: 860px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .page-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0;
     }
 
     .article-list {
       list-style: none;
       padding: 0;
-      padding-top: 44px;
-      max-width: 800px;
-      margin: 20px auto;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .article-item {
       background: #fff;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      padding: 20px;
-      border: 1px solid #ddd;
-      transition: box-shadow 0.3s ease;
+      border-radius: 10px;
+      padding: 18px 20px;
+      border: 1px solid #e0e0e0;
+      transition: border-color 0.2s;
     }
 
-    .article-item:hover {
-      border-color: #aaa;
+    .article-item:hover { border-color: #bbb; }
+
+    .article-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
     }
 
     .article-title {
-      margin: 0 0 10px;
-      font-size: 1.5em;
-    }
-
-    .article-info {
-      display: flex;
-      gap: 4px;
-      font-size: 0.9em;
-      color: #666;
-      margin: 0 0 10px;
-    }
-
-    .view-details-button {
-      padding: 4px 8px;
-      border: none;
-      border-radius: 4px;
-      text-decoration: underline;
-      color: #007bff;
-      font-size: 14px;
-      margin-right: 10px;
-    }
-
-    .view-details-button:hover {}
-
-    .authentic-button {
-      margin-top: 12px;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      background-color: #f6465d;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .authentic-button.false {
-      background-color: #0ecb81;
-    }
-
-    .authentic-button.false:hover {
-      background-color: #11b073;
-    }
-
-    .authentic-button.true:hover {
-      background-color: #c82333;
-    }
-
-    .load-more-button {
-      display: flex;
-      border-radius: 4px;
-      padding: 4px 8px;
-      margin: 20px auto;
-      color: #212121;
       font-size: 16px;
-      text-decoration: none;
-      background-color: #fff;
-      border: 1px solid #ddd;
-      cursor: pointer;
-      text-align: center;
-      transition: background-color 0.3s;
+      font-weight: 600;
+      margin: 0;
+      line-height: 1.4;
     }
 
-    .load-more-button:hover {
-      border-color: #aaa;
+    .badge {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
     }
 
-    .error-message {
-      color: #f6465d;
-      text-align: center;
-      margin-top: 20px;
-    }
+    .badge-live { background: #e8f5e9; color: #2e7d32; }
+    .badge-pending { background: #fff8e1; color: #f57f17; }
 
-    #no-more-articles {
-      text-align: center;
-      margin: 20px auto;
+    .article-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 13px;
       color: #666;
+      margin-bottom: 14px;
     }
 
-    .right-0 {
-      color: #fff;
-      float: right;
-      border: 0px solid #007bff;
-      background-color: #f6465d;
+    .article-meta span { display: flex; align-items: center; gap: 4px; }
+
+    .type-pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #e8eaf6;
+      color: #3949ab;
     }
 
-    .right-0:hover {
-      float: right;
-      background-color: #d44053;
-    }
-
-    .flex-row {
+    .article-actions {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .text-center {
-
+    .load-more-wrap {
       text-align: center;
+      margin: 28px 0 40px;
+    }
+
+    .btn-load-more {
+      padding: 8px 24px;
+      border-radius: 6px;
+      border: 1px solid #d0d0d0;
+      background: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-load-more:hover { border-color: #999; }
+
+    .error-message { color: #e53935; text-align: center; margin: 20px 0; }
+
+    #no-more-articles {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #999;
+      padding: 48px 0;
     }
   </style>
 </head>
 
 <body>
-  <h1>Welcome to the Admin Page</h1>
-  <a href="/admin/reqarticle" class="view-details-button text-center">Go to Request Page</a>
-  <a href="/admin/logout" class="view-details-button right-0">Logout</a>
-  <ul class="article-list">
-    <% if (articles.length> 0) { %>
-      <% articles.forEach(article=> { %>
-        <li class="article-item">
-          <!-- <img src="<%= article.imageUrl %>" alt="Article Image" class="article-image"> -->
-          <h2 class="article-title">
-            <%= article.title %>
-          </h2>
-          <p class="article-info">Created At: <%= new Date(article.createdAt).toLocaleDateString() %>
-          </p>
-          <p class="article-info">Author: <%= article.author.name %>
-          </p>
-          <p class="article-info">Gmail: <%= article.author.contact %>
-          </p>
-          <div class="flex-row">
-            <a href="/admin/view-article/<%= article._id %>" class="view-details-button">View Details →</a>
-            <form action="/admin/update-authentic/<%= article._id %>" method="post">
-              <button type="submit" class="authentic-button <%= article.isAuthentic ? 'true' : 'false' %>">
-                <%= article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic' %>
-              </button>
-            </form>
-          </div>
-        </li>
-        <% }) %>
-          <% } else { %>
-            <p>No articles available.</p>
-            <% } %>
-  </ul>
+  <nav>
+    <span class="brand">Admin Panel</span>
+    <div class="nav-links">
+      <a href="/admin/reqArticle" class="btn btn-outline">Requested Articles</a>
+      <a href="/admin/logout" class="btn btn-danger">Logout</a>
+    </div>
+  </nav>
 
-  <button id="load-more" class="load-more-button">Load More ↓</button>
+  <div class="container">
+    <div class="page-header">
+      <h1>Articles</h1>
+    </div>
 
-
-  <% if (typeof error !=='undefined' ) { %>
-    <p class="error-message">
-      <%= error %>
-    </p>
+    <% if (typeof error !== 'undefined') { %>
+      <p class="error-message"><%= error %></p>
     <% } %>
 
-      <p id="no-more-articles" style="display: none;">No more articles to load.</p>
+    <ul class="article-list" id="article-list">
+      <% if (articles.length > 0) { %>
+        <% articles.forEach(article => { %>
+          <li class="article-item">
+            <div class="article-header">
+              <h2 class="article-title"><%= article.title %></h2>
+              <span class="badge <%= article.isAuthentic ? 'badge-live' : 'badge-pending' %>">
+                <%= article.isAuthentic ? 'Live' : 'Pending' %>
+              </span>
+            </div>
+            <div class="article-meta">
+              <span><strong><%= article.companyName %></strong></span>
+              <span class="type-pill"><%= article.typeOfArticle %></span>
+              <span><%= article.author.name %> &middot; <%= article.author.contact %></span>
+              <span><%= new Date(article.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></span>
+            </div>
+            <div class="article-actions">
+              <a href="/admin/view-article/<%= article._id %>" class="btn btn-outline">View Details →</a>
+              <form action="/admin/update-authentic/<%= article._id %>" method="post">
+                <button type="submit" class="btn <%= article.isAuthentic ? 'btn-revoke' : 'btn-approve' %>">
+                  <%= article.isAuthentic ? 'Revoke' : 'Approve' %>
+                </button>
+              </form>
+            </div>
+          </li>
+        <% }) %>
+      <% } else { %>
+        <div class="empty-state">No articles yet.</div>
+      <% } %>
+    </ul>
 
-      <script>
-        let currentPage = 1;
-        const limit = 5;
+    <div class="load-more-wrap">
+      <button id="load-more" class="btn-load-more">Load more ↓</button>
+      <p id="no-more-articles">All articles loaded.</p>
+    </div>
+  </div>
 
-        document.getElementById('load-more').addEventListener('click', () => {
-          currentPage += 1;
-          console.log('Current Page:', currentPage);
-          fetch(`/api/anubhav/articles?page=${currentPage}`)
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              console.log('Response:', response);
-              return response.json();
-            })
-            .then(data => {
-              const { articles, hasMore } = data;
-              console.log("data", data);
-              if (articles.length > 0) {
-                const articleList = document.querySelector('.article-list');
-                articles.forEach(article => {
-                  const articleItem = document.createElement('li');
-                  articleItem.className = 'article-item';
-                  articleItem.innerHTML = `
-                <!-- <img src="${article.imageUrl}" alt="Article Image" class="article-image"> -->
-                <h2 class="article-title">${article.title}</h2>
-                <p class="article-info">Created At: ${new Date(article.createdAt).toLocaleDateString()}</p>
-                <a href="/admin/view-article/${article._id}" class="view-details-button">View Details</a>
-                <form action="/admin/update-authentic/${article._id}" method="post">
-                  <button type="submit" class="authentic-button ${article.isAuthentic ? 'true' : 'false'}">
-                    ${article.isAuthentic ? 'Mark as Not Authentic' : 'Mark as Authentic'}
-                  </button>
-                </form>
-              `;
-                  articleList.appendChild(articleItem);
-                });
+  <script>
+    let currentPage = 1;
 
-                if (!hasMore) {
-                  const loadMoreButton = document.getElementById('load-more');
-                  const noMoreArticles = document.getElementById('no-more-articles');
-                  if (loadMoreButton) loadMoreButton.style.display = 'none';
-                  if (noMoreArticles) noMoreArticles.style.display = 'block';
-                }
-              } else {
-                const loadMoreButton = document.getElementById('load-more');
-                const noMoreArticles = document.getElementById('no-more-articles');
-                if (loadMoreButton) loadMoreButton.style.display = 'none';
-                if (noMoreArticles) noMoreArticles.style.display = 'block';
-              }
-            })
-            .catch(error => {
-              console.error('Error fetching articles:', error);
-              const loadMoreButton = document.getElementById('load-more');
-              const noMoreArticles = document.getElementById('no-more-articles');
-              if (loadMoreButton) loadMoreButton.style.display = 'none';
-              if (noMoreArticles) noMoreArticles.style.display = 'block';
-            });
+    function buildArticleHTML(article) {
+      const date = new Date(article.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const badgeClass = article.isAuthentic ? 'badge-live' : 'badge-pending';
+      const badgeText = article.isAuthentic ? 'Live' : 'Pending';
+      const btnClass = article.isAuthentic ? 'btn-revoke' : 'btn-approve';
+      const btnText = article.isAuthentic ? 'Revoke' : 'Approve';
+      return `
+        <li class="article-item">
+          <div class="article-header">
+            <h2 class="article-title">${article.title}</h2>
+            <span class="badge ${badgeClass}">${badgeText}</span>
+          </div>
+          <div class="article-meta">
+            <span><strong>${article.companyName}</strong></span>
+            <span class="type-pill">${article.typeOfArticle}</span>
+            <span>${article.author.name} &middot; ${article.author.contact}</span>
+            <span>${date}</span>
+          </div>
+          <div class="article-actions">
+            <a href="/admin/view-article/${article._id}" class="btn btn-outline">View Details →</a>
+            <form action="/admin/update-authentic/${article._id}" method="post">
+              <button type="submit" class="btn ${btnClass}">${btnText}</button>
+            </form>
+          </div>
+        </li>`;
+    }
+
+    document.getElementById('load-more').addEventListener('click', () => {
+      currentPage += 1;
+      fetch(`/api/anubhav/articles?page=${currentPage}`)
+        .then(r => r.json())
+        .then(({ articles, hasMore }) => {
+          const list = document.getElementById('article-list');
+          articles.forEach(a => list.insertAdjacentHTML('beforeend', buildArticleHTML(a)));
+          if (!hasMore || articles.length === 0) {
+            document.getElementById('load-more').style.display = 'none';
+            document.getElementById('no-more-articles').style.display = 'block';
+          }
+        })
+        .catch(() => {
+          document.getElementById('load-more').style.display = 'none';
+          document.getElementById('no-more-articles').style.display = 'block';
         });
-      </script>
+    });
+  </script>
 </body>
 
 </html>

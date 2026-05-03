@@ -2,6 +2,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const session = require('express-session');
+const { MongoStore } = require('connect-mongo');
 const bodyParser = require('body-parser');
 const path = require('path');
 const status = require('express-status-monitor');
@@ -57,8 +58,9 @@ app.use(bodyParser.json());
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false }
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MONGOURI }),
+  cookie: { secure: process.env.NODE_ENV === 'prod', maxAge: 1000 * 60 * 60 * 24 }
 }));
 app.use('/public', express.static('public'));
 
