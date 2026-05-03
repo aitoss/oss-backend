@@ -60,6 +60,11 @@ const articleSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide a Image URL'],
   },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    default: null,
+  },
 });
 
 module.exports = mongoose.model('Article', articleSchema);

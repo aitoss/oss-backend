@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { LRUCache } = require('lru-cache')
 const Article = require('../../models/Article');
+const Company = require('../../models/Company');
+const normalizeCompanyName = require('../../utils/normalizeCompanyName');
 const multer = require('multer');
 const cors = require('cors');
 const app = express();
@@ -233,14 +235,16 @@ router.get('/blog/:index', async (req, res) => {
 
 router.get('/search', async (req, res) => {
   const query = req.query.q;
-  const companyName = req.query.company;
+  const { companyId, company: companyName } = req.query;
   const tags = req.query.tags;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
   const baseQuery = { $text: { $search: query } };
-  if (companyName) {
+  if (companyId) {
+    baseQuery.companyId = companyId;
+  } else if (companyName) {
     baseQuery.companyName = companyName;
   }
   if (tags) {
@@ -256,7 +260,7 @@ router.get('/search', async (req, res) => {
 
     res.json({ totalArticles, articles });
   } catch (error) {
-    console.error('Error searching for suggestions:', error);
+    console.error('Error searching articles:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -284,15 +288,24 @@ router.get('/search', async (req, res) => {
  */
 
 router.get('/getCompany', async (req, res) => {
-  const companyName = req.query.company;
-  console.log("here", companyName);
+  const { companyId, company: companyName } = req.query;
 
   try {
-    const totalArticles = await Article.countDocuments({ companyName: companyName });
-    const articles = await Article.find({ companyName: companyName });
+    let query = {};
+    if (companyId) {
+      query.companyId = companyId;
+    } else if (companyName) {
+      query.companyName = companyName;
+    }
+
+    const [totalArticles, articles] = await Promise.all([
+      Article.countDocuments(query),
+      Article.find(query),
+    ]);
+
     res.json({ totalArticles, articles });
   } catch (error) {
-    console.error('Error searching for suggestions:', error);
+    console.error('Error fetching company articles:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -312,11 +325,20 @@ router.get('/getCompany', async (req, res) => {
 
 router.get("/countCompanies", async (req, res) => {
   try {
-    const data = await Article.aggregate([
-      { $match: { isAuthentic: true } },
-      { $group: { _id: "$companyName", domainName: { $first: "$companyDomainName" }, count: { $sum: 1 } } },
-      { $sort: { _id: 1 } },
-      { $project: { _id: 0, company: "$_id", domainName: 1, count: 1 } },
+    const data = await Company.aggregate([
+      {
+        $lookup: {
+          from: 'articles',
+          let: { companyId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $and: [{ $eq: ['$companyId', '$$companyId'] }, { $eq: ['$isAuthentic', true] }] } } },
+          ],
+          as: 'articles',
+        },
+      },
+      { $match: { $expr: { $gt: [{ $size: '$articles' }, 0] } } },
+      { $sort: { name: 1 } },
+      { $project: { _id: 0, company: '$name', domain: 1, count: { $size: '$articles' } } },
     ]);
 
     return res.status(200).json({ success: true, data });
@@ -361,28 +383,28 @@ router.get("/countCompanies", async (req, res) => {
 
 router.get('/similarBlogs', async (req, res) => {
   const query = req.query.q;
-  const companyName = req.query.company;
+  const { companyId, company: companyName } = req.query;
   const tags = req.query.tags;
 
-  const baseQuery = {$text: {$search: query},};
-  if (companyName) {
+  const baseQuery = { $text: { $search: query } };
+  if (companyId) {
+    baseQuery.companyId = companyId;
+  } else if (companyName) {
     baseQuery.companyName = companyName;
   }
   if (tags) {
-    baseQuery.articleTags = {$in: tags.split(',')};
+    baseQuery.articleTags = { $in: tags.split(',') };
   }
 
   try {
-    const suggestions = await Article.find(baseQuery, {
-      score: {$meta: 'textScore'},
-    })
-        .sort({score: {$meta: 'textScore'}})
-        .limit(5);
+    const suggestions = await Article.find(baseQuery, { score: { $meta: 'textScore' } })
+      .sort({ score: { $meta: 'textScore' } })
+      .limit(5);
 
     res.json(suggestions);
   } catch (error) {
-    console.error('Error searching for suggestions:', error);
-    res.status(500).json({message: 'Internal server error'});
+    console.error('Error fetching similar blogs:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -504,6 +526,16 @@ router.post('/upload-image', async (req, res) => {
  *         description: Server error
  */
 
+router.get('/companies', async (req, res) => {
+  try {
+    const companies = await Company.find({ status: true }, 'name domain normalizedName').sort({ name: 1 });
+    res.json({ companies });
+  } catch (error) {
+    console.error('Error fetching companies:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 router.post('/blogs', async (req, res) => {
   const {
     title,
@@ -516,15 +548,28 @@ router.post('/blogs', async (req, res) => {
     image,
   } = req.body;
 
-  // Check if image data is provided
   if (!image) {
-    return res.status(400).json({message: 'No image provided'});
+    return res.status(400).json({ message: 'No image provided' });
   }
 
   try {
+    // resolve or create company
+    let companyId = null;
+    if (companyName) {
+      const normalized = normalizeCompanyName(companyName);
+      if (normalized) {
+        let company = await Company.findOne({ normalizedName: normalized });
+        if (!company) {
+          company = await Company.create({ name: companyName.trim(), normalizedName: normalized, status: true });
+        }
+        companyId = company._id;
+      }
+    }
+
     const createArticle = new Article({
       title,
       companyName,
+      companyId,
       description: article,
       typeOfArticle: role,
       articleTags,
@@ -536,12 +581,10 @@ router.post('/blogs', async (req, res) => {
     });
 
     await createArticle.save();
-    res
-        .status(201)
-        .json({message: 'Article created successfully', createArticle});
+    res.status(201).json({ message: 'Article created successfully', createArticle });
   } catch (error) {
     console.error('Error creating article:', error);
-    res.status(500).json({message: 'Internal server error'});
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
