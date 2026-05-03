@@ -235,13 +235,13 @@ router.get('/blog/:index', async (req, res) => {
 
 router.get('/search', async (req, res) => {
   const query = req.query.q;
-  const { companyId, company: companyName } = req.query;
+  const { companyId, company: companyName, sort = 'relevance' } = req.query;
   const tags = req.query.tags;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const baseQuery = { $text: { $search: query } };
+  const baseQuery = { isAuthentic: true, $text: { $search: query } };
   if (companyId) {
     baseQuery.companyId = companyId;
   } else if (companyName) {
@@ -251,10 +251,12 @@ router.get('/search', async (req, res) => {
     baseQuery.articleTags = { $in: tags.split(',') };
   }
 
+  const sortOrder = sort === 'date' ? { createdAt: -1 } : { score: { $meta: 'textScore' } };
+
   try {
     const totalArticles = await Article.countDocuments(baseQuery);
     const articles = await Article.find(baseQuery, { score: { $meta: 'textScore' } })
-      .sort({ score: { $meta: 'textScore' } })
+      .sort(sortOrder)
       .skip(skip)
       .limit(limit);
 
@@ -386,7 +388,7 @@ router.get('/similarBlogs', async (req, res) => {
   const { companyId, company: companyName } = req.query;
   const tags = req.query.tags;
 
-  const baseQuery = { $text: { $search: query } };
+  const baseQuery = { isAuthentic: true, $text: { $search: query } };
   if (companyId) {
     baseQuery.companyId = companyId;
   } else if (companyName) {
