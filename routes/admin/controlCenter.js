@@ -16,15 +16,20 @@ router.get("/login", (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (
-    email === adminEmail &&
-    (await bcrypt.compare(password, adminPasswordHash))
-  ) {
-    req.session.isAuthenticated = true;
-    res.redirect("/admin/home");
-  } else {
-    res.render("login", { error: "Invalid email or password" });
+  try {
+    const { email, password } = req.body;
+    if (
+      email === adminEmail &&
+      (await bcrypt.compare(password, adminPasswordHash))
+    ) {
+      req.session.isAuthenticated = true;
+      res.redirect("/admin/home");
+    } else {
+      res.render("login", { error: "Invalid email or password" });
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    res.render("login", { error: "An error occurred. Please try again." });
   }
 });
 

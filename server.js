@@ -35,7 +35,7 @@ app.set('trust proxy', 1); // Makes vercel work with express-rate-limit
 app.use(limiter);
 
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -45,8 +45,9 @@ app.use(cors({
   },
   credentials: true,
   allowedHeaders: ["content-type", ...supertokens.getAllCORSHeaders()],
-}));
+};
 
+app.use('/api', cors(corsOptions));
 app.use(middleware());
 app.use(errorHandler());
 
@@ -76,7 +77,10 @@ app.use((req, res, next) => {
 // @desc   home page render
 // @access private
 app.get('/', (req, res) => {
-  res.send('Staging Server is running');
+  res.json({
+    payload: "Welcome to Anubhav API",
+    success: true
+  })
 });
 
 // Set EJS as the view engine
