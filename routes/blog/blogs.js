@@ -1,9 +1,32 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const { LRUCache } = require('lru-cache')
 const Article = require('../../models/Article');
 const Company = require('../../models/Company');
+const User = require('../../models/User');
+const ArticleAudit = require('../../models/ArticleAudit');
+const { verifySession } = require('supertokens-node/recipe/session/framework/express');
 const normalizeCompanyName = require('../../utils/normalizeCompanyName');
+
+// Resolve companyId from either explicit companyId or a companyName (upsert path)
+async function resolveCompany({ companyId, companyName }) {
+  if (companyId) {
+    const company = await Company.findById(companyId);
+    if (!company) throw new Error('Invalid companyId');
+    return { companyId: company._id, companyName: company.name };
+  }
+  if (companyName) {
+    const normalized = normalizeCompanyName(companyName);
+    if (!normalized) return { companyId: null, companyName };
+    let company = await Company.findOne({ normalizedName: normalized });
+    if (!company) {
+      company = await Company.create({ name: companyName.trim(), normalizedName: normalized, status: true });
+    }
+    return { companyId: company._id, companyName: company.name };
+  }
+  return { companyId: null, companyName: null };
+}
 const multer = require('multer');
 const cors = require('cors');
 const app = express();
@@ -258,7 +281,8 @@ router.get('/search', async (req, res) => {
     const articles = await Article.find(baseQuery, { score: { $meta: 'textScore' } })
       .sort(sortOrder)
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .populate('authorId', 'name email contact logoUrl linkedinUrl');
 
     res.json({ totalArticles, articles });
   } catch (error) {
@@ -302,7 +326,7 @@ router.get('/getCompany', async (req, res) => {
 
     const [totalArticles, articles] = await Promise.all([
       Article.countDocuments(query),
-      Article.find(query),
+      Article.find(query).populate('authorId', 'name email contact logoUrl linkedinUrl'),
     ]);
 
     res.json({ totalArticles, articles });
@@ -349,6 +373,89 @@ router.get("/countCompanies", async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 })
+
+/**
+ * @swagger
+ * /api/anubhav/searchCompanies:
+ *   get:
+ *     summary: Search companies for suggestion dropdown
+ *     description: Returns companies matching the query string, ranked text-first (exact > prefix > substring) with article count as a tiebreaker.
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: Search text. If omitted, returns top companies by article count.
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10, minimum: 1, maximum: 50 }
+ *     responses:
+ *       200:
+ *         description: List of company suggestions
+ *       500:
+ *         description: Server error
+ */
+router.get('/searchCompanies', async (req, res) => {
+  try {
+    const rawQ = (req.query.q || '').toString().trim();
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+
+    const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const normalized = rawQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const pipeline = [{ $match: { status: true } }];
+
+    if (rawQ) {
+      const safe = escapeRegex(rawQ);
+      pipeline.push({
+        $match: {
+          $or: [
+            { name: { $regex: safe, $options: 'i' } },
+            { normalizedName: { $regex: escapeRegex(normalized) } },
+          ],
+        },
+      });
+      pipeline.push({
+        $addFields: {
+          rank: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$normalizedName', normalized] }, then: 0 },
+                { case: { $regexMatch: { input: '$name', regex: `^${safe}`, options: 'i' } }, then: 1 },
+              ],
+              default: 2,
+            },
+          },
+        },
+      });
+    } else {
+      pipeline.push({ $addFields: { rank: 0 } });
+    }
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'articles',
+          let: { companyId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $and: [{ $eq: ['$companyId', '$$companyId'] }, { $eq: ['$isAuthentic', true] }] } } },
+            { $count: 'n' },
+          ],
+          as: 'articleCount',
+        },
+      },
+      { $addFields: { articleCount: { $ifNull: [{ $arrayElemAt: ['$articleCount.n', 0] }, 0] } } },
+      { $sort: { rank: 1, articleCount: -1, name: 1 } },
+      { $limit: limit },
+      { $project: { _id: 1, company: '$name', domain: 1 } },
+    );
+
+    const data = await Company.aggregate(pipeline);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error('Error searching companies:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 /**
  * @swagger
@@ -401,7 +508,8 @@ router.get('/similarBlogs', async (req, res) => {
   try {
     const suggestions = await Article.find(baseQuery, { score: { $meta: 'textScore' } })
       .sort({ score: { $meta: 'textScore' } })
-      .limit(5);
+      .limit(5)
+      .populate('authorId', 'name email contact logoUrl linkedinUrl');
 
     res.json(suggestions);
   } catch (error) {
@@ -538,15 +646,14 @@ router.get('/companies', async (req, res) => {
   }
 });
 
-router.post('/blogs', async (req, res) => {
+router.post('/blogs', verifySession(), async (req, res) => {
   const {
     title,
     article,
     role,
     articleTags,
-    companyName,
-    authorName,
-    authorEmailId,
+    companyId: companyIdInput,
+    companyName: companyNameInput,
     image,
   } = req.body;
 
@@ -555,37 +662,296 @@ router.post('/blogs', async (req, res) => {
   }
 
   try {
-    // resolve or create company
-    let companyId = null;
-    if (companyName) {
-      const normalized = normalizeCompanyName(companyName);
-      if (normalized) {
-        let company = await Company.findOne({ normalizedName: normalized });
-        if (!company) {
-          company = await Company.create({ name: companyName.trim(), normalizedName: normalized, status: true });
-        }
-        companyId = company._id;
-      }
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({ supertokensUserId });
+    if (!user) {
+      return res.status(401).json({ message: 'User not found in local DB' });
+    }
+
+    let resolved;
+    try {
+      resolved = await resolveCompany({ companyId: companyIdInput, companyName: companyNameInput });
+    } catch (e) {
+      return res.status(400).json({ message: e.message });
     }
 
     const createArticle = new Article({
       title,
-      companyName,
-      companyId,
+      companyName: resolved.companyName,
+      companyId: resolved.companyId,
       description: article,
       typeOfArticle: role,
       articleTags,
-      author: {
-        name: authorName,
-        contact: authorEmailId,
-      },
+      authorId: user._id,
       imageUrl: image,
     });
 
     await createArticle.save();
+
+    await ArticleAudit.create({
+      articleId: createArticle._id,
+      userId: user._id,
+      action: 'create',
+      after: createArticle.toObject(),
+    });
+
     res.status(201).json({ message: 'Article created successfully', createArticle });
   } catch (error) {
     console.error('Error creating article:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/blogs/{id}:
+ *   patch:
+ *     summary: Edit an existing article (owner only)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: Updated }
+ *       403: { description: Not the author }
+ *       404: { description: Article not found }
+ */
+router.patch('/blogs/:id', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({ supertokensUserId });
+    if (!user) return res.status(401).json({ message: 'User not found' });
+
+    const article = await Article.findById(req.params.id);
+    if (!article) return res.status(404).json({ message: 'Article not found' });
+    if (!article.authorId || String(article.authorId) !== String(user._id)) {
+      return res.status(403).json({ message: 'You are not the author of this article' });
+    }
+
+    const before = article.toObject();
+    const allowed = ['title', 'description', 'typeOfArticle', 'articleTags', 'imageUrl', 'showName'];
+    const update = {};
+    for (const k of allowed) {
+      if (req.body[k] !== undefined) update[k] = req.body[k];
+    }
+    // map FE-friendly names too
+    if (req.body.article !== undefined) update.description = req.body.article;
+    if (req.body.role !== undefined) update.typeOfArticle = req.body.role;
+    if (req.body.image !== undefined) update.imageUrl = req.body.image;
+
+    if (req.body.companyId !== undefined || req.body.companyName !== undefined) {
+      try {
+        const resolved = await resolveCompany({
+          companyId: req.body.companyId,
+          companyName: req.body.companyName,
+        });
+        update.companyId = resolved.companyId;
+        update.companyName = resolved.companyName;
+      } catch (e) {
+        return res.status(400).json({ message: e.message });
+      }
+    }
+
+    Object.assign(article, update);
+    await article.save();
+    const after = article.toObject();
+
+    const changedFields = Object.keys(update).filter(
+      (k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]),
+    );
+
+    await ArticleAudit.create({
+      articleId: article._id,
+      userId: user._id,
+      action: 'update',
+      changedFields,
+      before,
+      after,
+    });
+
+    res.json({ message: 'Article updated', article });
+  } catch (error) {
+    console.error('Error updating article:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/me:
+ *   get:
+ *     summary: Get current logged-in user's profile
+ *     responses:
+ *       200: { description: User profile }
+ *       401: { description: Not authenticated }
+ */
+router.get('/me', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({ supertokensUserId });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json({ user });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/me:
+ *   patch:
+ *     summary: Update current user's profile
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               contact: { type: string }
+ *               logoUrl: { type: string }
+ *               linkedinUrl: { type: string }
+ */
+router.patch('/me', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const allowed = ['name', 'contact', 'logoUrl', 'linkedinUrl'];
+    const update = {};
+    for (const k of allowed) {
+      if (req.body[k] !== undefined) update[k] = req.body[k];
+    }
+    const user = await User.findOneAndUpdate(
+      { supertokensUserId },
+      { $set: update },
+      { new: true },
+    );
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json({ user });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/me/articles:
+ *   get:
+ *     summary: List articles authored by the current user
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ */
+router.get('/me/articles', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({ supertokensUserId }, '_id');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+    const skip = (page - 1) * limit;
+
+    const [total, articles] = await Promise.all([
+      Article.countDocuments({ authorId: user._id }),
+      Article.find({ authorId: user._id })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+    ]);
+
+    res.json({ total, page, limit, articles });
+  } catch (error) {
+    console.error('Error listing user articles:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/users/{id}:
+ *   get:
+ *     summary: Public user profile
+ *     description: Returns a user's public profile. Email and supertokensUserId are intentionally omitted.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: User profile }
+ *       404: { description: User not found }
+ */
+router.get('/users/:id', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const user = await User.findById(
+      req.params.id,
+      'name contact logoUrl linkedinUrl status createdAt updatedAt',
+    );
+    if (!user || user.status !== 'active') {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.json({ user });
+  } catch (error) {
+    console.error('Error fetching public user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/users/{id}/articles:
+ *   get:
+ *     summary: Public list of articles authored by a user
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *     responses:
+ *       200: { description: Paginated articles }
+ *       404: { description: User not found }
+ */
+router.get('/users/:id/articles', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const user = await User.findById(req.params.id, '_id status');
+    if (!user || user.status !== 'active') {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+    const skip = (page - 1) * limit;
+
+    const [total, articles] = await Promise.all([
+      Article.countDocuments({ authorId: user._id }),
+      Article.find({ authorId: user._id })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+    ]);
+
+    res.json({ total, page, limit, articles });
+  } catch (error) {
+    console.error('Error listing user articles:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

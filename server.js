@@ -56,13 +56,14 @@ app.use(errorHandler());
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(session({
+// express-session is scoped to /admin only — global mounting collides with SuperTokens' req.session.
+const adminSession = session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({ mongoUrl: process.env.MONGOURI }),
   cookie: { secure: process.env.NODE_ENV === 'prod', maxAge: 1000 * 60 * 60 * 24 }
-}));
+});
 app.use('/public', express.static('public'));
 
 // Documentation
@@ -96,6 +97,6 @@ app.use('/api/anubhav/', require('./routes/feedbacks'));
 app.use('/api/anubhav/', require('./routes/reqarticle'));
 app.use('/api/anubhav/', require('./routes/writeArticle'));
 
-app.use('/admin/', require('./routes/admin/controlCenter'));
+app.use('/admin/', adminSession, require('./routes/admin/controlCenter'));
 
 module.exports = app;

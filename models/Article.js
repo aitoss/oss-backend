@@ -44,17 +44,8 @@ const articleSchema = new mongoose.Schema({
     default: true,
   },
   author: {
-    name: {
-      type: String,
-      required: [true, 'Please provide your Name'],
-    },
-    contact: {
-      type: String,
-      required: [
-        true,
-        'Please provide a point of contact (any social medial URLs) !',
-      ],
-    },
+    name: { type: String },
+    contact: { type: String },
   },
   imageUrl: {
     type: String,
@@ -64,6 +55,12 @@ const articleSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
     default: null,
+  },
+  authorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+    index: true,
   },
 });
 
