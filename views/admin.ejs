@@ -225,7 +225,8 @@
             <div class="article-meta">
               <span><strong><%= article.companyName %></strong></span>
               <span class="type-pill"><%= article.typeOfArticle %></span>
-              <span><%= article.author.name %> &middot; <%= article.author.contact %></span>
+              <% const a = article.authorId || {}; %>
+              <span><%= a.name || 'Unknown' %> &middot; <%= a.contact || a.email || '—' %></span>
               <span><%= new Date(article.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></span>
             </div>
             <div class="article-actions">
@@ -258,6 +259,9 @@
       const badgeText = article.isAuthentic ? 'Live' : 'Pending';
       const btnClass = article.isAuthentic ? 'btn-revoke' : 'btn-approve';
       const btnText = article.isAuthentic ? 'Revoke' : 'Approve';
+      const author = article.authorId || {};
+      const authorName = author.name || 'Unknown';
+      const authorContact = author.contact || author.email || '—';
       return `
         <li class="article-item">
           <div class="article-header">
@@ -267,7 +271,7 @@
           <div class="article-meta">
             <span><strong>${article.companyName}</strong></span>
             <span class="type-pill">${article.typeOfArticle}</span>
-            <span>${article.author.name} &middot; ${article.author.contact}</span>
+            <span>${authorName} &middot; ${authorContact}</span>
             <span>${date}</span>
           </div>
           <div class="article-actions">

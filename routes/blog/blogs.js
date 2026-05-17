@@ -90,7 +90,8 @@ router.get("/blogs", async (req, res) => {
       .sort({ createdAt: -1 })
       .sort(query.sort)
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .populate('authorId', 'name email contact logoUrl linkedinUrl');
 
     // Check if there are more articles
     const hasMore = articles.length === limit;
@@ -145,7 +146,8 @@ router.get("/articles", async (req, res) => {
       .sort({ createdAt: -1 })
       .sort(query.sort)
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .populate('authorId', 'name email contact');
 
     // Check if there are more articles
     const hasMore = articles.length === limit;
@@ -192,7 +194,8 @@ router.get('/blog/:index', async (req, res) => {
       return res.json(cache.get(index)); // Return cached blog data
     }
 
-    const blog = await Article.findById(index);
+    const blog = await Article.findById(index)
+      .populate('authorId', 'name email contact logoUrl linkedinUrl');
 
     if (!blog) {
       return res.status(404).json({ msg: 'Blog not found' });
