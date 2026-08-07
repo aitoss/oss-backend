@@ -31,7 +31,9 @@ const app = express();
 
 connectDB();
 
-app.use(express.json());
+// Blog posts inline the banner image as a base64 data URI, which base64 inflates by 4/3
+// (a 73KB image becomes ~98KB), overshooting body-parser's 100kb default on its own.
+app.use(express.json({ limit: '5mb' }));
 app.set('trust proxy', 1); // Makes vercel work with express-rate-limit
 app.use(limiter);
 
