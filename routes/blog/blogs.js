@@ -46,6 +46,8 @@ const upload = multer({ storage: storage });
 require('dotenv').config();
 app.use(express.json());
 
+router.use('/blog', require('./summary'));
+
 
 /**
  * @swagger
