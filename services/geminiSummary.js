@@ -27,12 +27,8 @@ async function generateArticleSummary(prompt) {
         parts: [
           {
             text: [
-              'You are a precise summarizer for blog articles and interview experiences.',
-              'Write a detailed but compact summary that starts directly with the content.',
-              'Do not use filler openings like "This article details", "This article is about", "The article discusses", or "In this article".',
-              'Do not mention that you are summarizing.',
-              'Prefer concrete details, interview rounds, technical topics, HR points, and outcomes when present.',
-              'If the source reads like an interview experience, make the summary feel like a useful interview recap rather than a generic article description.',
+              'You are a careful summarizer for blog articles and interview experiences.',
+              'Follow the user prompt, keep the response factual, and do not invent details.',
             ].join(' '),
           },
         ],

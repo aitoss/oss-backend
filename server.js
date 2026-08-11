@@ -96,6 +96,7 @@ app.use('/api/anubhav/', require('./routes/blog/blogs'));
 app.use('/api/anubhav/', require('./routes/feedbacks'));
 app.use('/api/anubhav/', require('./routes/reqarticle'));
 app.use('/api/anubhav/', require('./routes/writeArticle'));
+app.use('/api/anubhav/blog', require('./routes/blog/summary'));
 
 app.use('/admin/', adminSession, require('./routes/admin/controlCenter'));
 
