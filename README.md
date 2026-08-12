@@ -14,6 +14,12 @@ Backend service for Anubhav, serves a server-rendered admin panel and a REST API
 
 ## Architecture
 
+How the code itself is organised — the `routes → services → models` layering,
+where new code belongs, and the conventions we hold PRs to — lives in
+[ARCHITECTURE.md](./ARCHITECTURE.md). Read it before your first contribution.
+
+The rest of this section covers the URL surfaces the server exposes.
+
 ### API (`/api/anubhav/*`)
 REST endpoints consumed by the frontend. CORS is scoped only to these routes — allowed origins are maintained in `constants.js`.
 
@@ -60,3 +66,8 @@ Use staging for all frontend development and testing.
 | `SUPERTOKENS_API_KEY` | SuperTokens API key |
 | `NODE_ENV` | `staging` locally, `prod` on Vercel |
 | `PORT` | Local port (default 3000) |
+| `GEMINI_API_KEY` | Gemini key for AI article summaries. Without it the summary endpoints return 503 |
+
+Optional summary tuning: `GEMINI_MODEL` (default `gemini-2.5-flash`),
+`GEMINI_TIMEOUT_MS` (default 20000), `SUMMARY_PROCESSING_STALE_MS` (default
+120000), `SUMMARY_DEBUG` (`true` logs full summary bodies).

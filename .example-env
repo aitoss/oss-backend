@@ -7,3 +7,11 @@ SUPERTOKENS_CONNECTION_URI
 SUPERTOKENS_API_KEY
 API_DOMAIN
 WEBSITE_DOMAIN
+
+# AI article summaries. Without GEMINI_API_KEY the summary endpoints return 503.
+GEMINI_API_KEY
+# Optional overrides:
+# GEMINI_MODEL                  default gemini-2.5-flash
+# GEMINI_TIMEOUT_MS             default 20000, keep under the function duration limit
+# SUMMARY_PROCESSING_STALE_MS   default 120000, when a stuck job may be retried
+# SUMMARY_DEBUG                 set to "true" to log full summary bodies

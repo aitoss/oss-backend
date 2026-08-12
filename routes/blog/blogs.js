@@ -47,7 +47,6 @@ require('dotenv').config();
 app.use(express.json());
 
 
-
 /**
  * @swagger
  * /api/anubhav/blogs:

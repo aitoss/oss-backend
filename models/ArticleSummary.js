@@ -6,8 +6,9 @@ const articleSummarySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Article',
       required: true,
+      // `unique` already builds the index; adding `index: true` too makes
+      // mongoose warn about a duplicate.
       unique: true,
-      index: true,
     },
     summary: {
       type: String,
