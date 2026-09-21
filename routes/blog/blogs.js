@@ -712,6 +712,96 @@ router.post('/blogs', verifySession(), async (req, res) => {
 
 /**
  * @swagger
+ * /api/anubhav/me/reactions:
+ *   get:
+ *     summary: Which articles the caller has liked and saved
+ *     responses:
+ *       200: { description: Two arrays of article ids }
+ *       401: { description: Not authenticated }
+ */
+router.get('/me/reactions', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({supertokensUserId})
+        .select('likedArticles savedArticles')
+        .lean();
+    if (!user) return res.status(401).json({message: 'User not found'});
+
+    return res.json({
+      liked: (user.likedArticles || []).map(String),
+      saved: (user.savedArticles || []).map(String),
+    });
+  } catch (error) {
+    console.error('Error reading reactions:', error);
+    return res.status(500).json({message: 'Internal server error'});
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/blogs/{id}/reactions:
+ *   put:
+ *     summary: Like/unlike or save/unsave an article
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               kind: { type: string, enum: [like, save] }
+ *               value: { type: boolean }
+ *     responses:
+ *       200: { description: The stored state }
+ *       400: { description: Unknown kind }
+ *       401: { description: Not authenticated }
+ *       404: { description: Article not found }
+ */
+router.put('/blogs/:id/reactions', verifySession(), async (req, res) => {
+  const FIELDS = {like: 'likedArticles', save: 'savedArticles'};
+
+  try {
+    const field = FIELDS[req.body.kind];
+    if (!field) {
+      return res.status(400).json({message: 'kind must be "like" or "save"'});
+    }
+    const value = Boolean(req.body.value);
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({message: 'Article not found'});
+    }
+
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({supertokensUserId}).select('_id');
+    if (!user) return res.status(401).json({message: 'User not found'});
+
+    // Checked so the arrays cannot be grown with ids that point at nothing.
+    // Soft-deleted articles are already invisible to findById.
+    const article = await Article.findById(req.params.id).select('_id').lean();
+    if (!article) return res.status(404).json({message: 'Article not found'});
+
+    // $addToSet/$pull rather than read-modify-write: two quick taps from two
+    // tabs would otherwise race and one would win with a stale array.
+    await User.updateOne(
+        {_id: user._id},
+        value ?
+          {$addToSet: {[field]: article._id}} :
+          {$pull: {[field]: article._id}},
+    );
+
+    return res.json({kind: req.body.kind, value, articleId: article._id});
+  } catch (error) {
+    console.error('Error saving reaction:', error);
+    return res.status(500).json({message: 'Internal server error'});
+  }
+});
+
+/**
+ * @swagger
  * /api/anubhav/blogs/{id}:
  *   get:
  *     summary: Read one of your own articles, approved or not
