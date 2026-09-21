@@ -6,6 +6,10 @@ const Article = require('../../models/Article');
 const Company = require('../../models/Company');
 const User = require('../../models/User');
 const ArticleAudit = require('../../models/ArticleAudit');
+const {
+  ArticleMutationError,
+  softDeleteArticle,
+} = require('../../services/articleMutations');
 const { verifySession } = require('supertokens-node/recipe/session/framework/express');
 const normalizeCompanyName = require('../../utils/normalizeCompanyName');
 
@@ -757,7 +761,11 @@ router.patch('/blogs/:id', verifySession(), async (req, res) => {
     }
 
     Object.assign(article, update);
+    if (Object.keys(update).length > 0) article.updatedAt = new Date();
     await article.save();
+    // /blog/:id caches for 24h, so an edit would otherwise keep serving the
+    // old body for the rest of the day.
+    cache.delete(String(article._id));
     const after = article.toObject();
 
     const changedFields = Object.keys(update).filter(
@@ -777,6 +785,42 @@ router.patch('/blogs/:id', verifySession(), async (req, res) => {
   } catch (error) {
     console.error('Error updating article:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/blogs/{id}:
+ *   delete:
+ *     summary: Soft-delete one of your own articles
+ *     responses:
+ *       200: { description: Article deleted }
+ *       401: { description: Not authenticated }
+ *       403: { description: Not the author }
+ *       404: { description: Article not found }
+ */
+router.delete('/blogs/:id', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({supertokensUserId});
+    if (!user) return res.status(401).json({message: 'User not found'});
+
+    const article = await softDeleteArticle({
+      articleId: req.params.id,
+      user,
+    });
+
+    // Without this the deleted article stays readable by direct link until
+    // the 24h cache entry expires.
+    cache.delete(String(article._id));
+
+    return res.json({message: 'Article deleted', articleId: article._id});
+  } catch (error) {
+    if (error instanceof ArticleMutationError) {
+      return res.status(error.status).json({message: error.message});
+    }
+    console.error('Error deleting article:', error);
+    return res.status(500).json({message: 'Internal server error'});
   }
 });
 

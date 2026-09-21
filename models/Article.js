@@ -62,6 +62,35 @@ const articleSchema = new mongoose.Schema({
     default: null,
     index: true,
   },
+  updatedAt: {
+    type: Date,
+    default: null,
+  },
+  deletedAt: {
+    type: Date,
+    default: null,
+    index: true,
+  },
+});
+
+// Deletes are soft, so every read has to exclude them. Filtering here rather
+// than at each call site because the model is queried from ~19 places and one
+// missed `deletedAt` filter puts a deleted article back in front of readers.
+// Pass `.setOptions({withDeleted: true})` to opt out (restore, moderation).
+const excludeDeleted = function excludeDeleted(next) {
+  if (this.getOptions && this.getOptions().withDeleted) return next();
+  if (this.getFilter().deletedAt === undefined) this.where({deletedAt: null});
+  return next();
+};
+
+articleSchema.pre(/^find/, excludeDeleted);
+articleSchema.pre('countDocuments', excludeDeleted);
+articleSchema.pre('distinct', excludeDeleted);
+
+articleSchema.pre('aggregate', function excludeDeletedFromAggregate(next) {
+  if (this.options && this.options.withDeleted) return next();
+  this.pipeline().unshift({$match: {deletedAt: null}});
+  return next();
 });
 
 module.exports = mongoose.model('Article', articleSchema);
