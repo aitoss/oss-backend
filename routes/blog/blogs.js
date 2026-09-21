@@ -739,6 +739,59 @@ router.get('/me/reactions', verifySession(), async (req, res) => {
 
 /**
  * @swagger
+ * /api/anubhav/me/reactions/articles:
+ *   get:
+ *     summary: The articles the caller has liked or saved
+ *     parameters:
+ *       - in: query
+ *         name: kind
+ *         required: true
+ *         schema: { type: string, enum: [like, save] }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *     responses:
+ *       200: { description: A page of articles }
+ *       400: { description: Unknown kind }
+ *       401: { description: Not authenticated }
+ */
+router.get('/me/reactions/articles', verifySession(), async (req, res) => {
+  const FIELDS = {like: 'likedArticles', save: 'savedArticles'};
+
+  try {
+    const field = FIELDS[req.query.kind];
+    if (!field) {
+      return res.status(400).json({message: 'kind must be "like" or "save"'});
+    }
+
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({supertokensUserId}).select(field).lean();
+    if (!user) return res.status(401).json({message: 'User not found'});
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+
+    // Newest reaction first: $addToSet appends, so the array is oldest-first.
+    const ids = (user[field] || []).slice().reverse();
+    const pageIds = ids.slice((page - 1) * limit, page * limit);
+
+    const articles = await Article.find({_id: {$in: pageIds}})
+        .populate('authorId', 'name email contact logoUrl linkedinUrl');
+
+    // $in ignores the order it was given, and an article deleted since the
+    // reaction simply drops out here rather than 404ing the whole page.
+    const order = new Map(pageIds.map((id, index) => [String(id), index]));
+    articles.sort((a, b) => order.get(String(a._id)) - order.get(String(b._id)));
+
+    return res.json({total: ids.length, page, limit, articles});
+  } catch (error) {
+    console.error('Error listing reacted articles:', error);
+    return res.status(500).json({message: 'Internal server error'});
+  }
+});
+
+/**
+ * @swagger
  * /api/anubhav/blogs/{id}/reactions:
  *   put:
  *     summary: Like/unlike or save/unsave an article
