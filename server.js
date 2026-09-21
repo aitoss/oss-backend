@@ -95,6 +95,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Use the routes
 app.use('/api/anubhav/', require('./routes/blog/blogs'));
+app.use('/api/anubhav/', require('./routes/blog/reactions'));
 app.use('/api/anubhav/', require('./routes/feedbacks'));
 app.use('/api/anubhav/', require('./routes/reqarticle'));
 app.use('/api/anubhav/', require('./routes/writeArticle'));

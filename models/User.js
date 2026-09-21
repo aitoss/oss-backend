@@ -40,20 +40,6 @@ const userSchema = new mongoose.Schema(
     lastLoggedInAt: {
       type: Date,
     },
-    // Reactions live on the reader, not the article: nothing shows a like or
-    // save count, so a per-article counter would be state nobody reads.
-    likedArticles: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Article',
-      },
-    ],
-    savedArticles: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Article',
-      },
-    ],
   },
   { timestamps: true },
 );

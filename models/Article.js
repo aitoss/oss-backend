@@ -64,7 +64,7 @@ const articleSchema = new mongoose.Schema({
   },
   updatedAt: {
     type: Date,
-    default: null,
+    default: Date.now,
   },
   deletedAt: {
     type: Date,
@@ -73,10 +73,8 @@ const articleSchema = new mongoose.Schema({
   },
 });
 
-// Deletes are soft, so every read has to exclude them. Filtering here rather
-// than at each call site because the model is queried from ~19 places and one
-// missed `deletedAt` filter puts a deleted article back in front of readers.
-// Pass `.setOptions({withDeleted: true})` to opt out (restore, moderation).
+// Deletes are soft, so reads exclude them here rather than at ~19 call sites.
+// Opt out with `.setOptions({withDeleted: true})`.
 const excludeDeleted = function excludeDeleted(next) {
   if (this.getOptions && this.getOptions().withDeleted) return next();
   if (this.getFilter().deletedAt === undefined) this.where({deletedAt: null});
