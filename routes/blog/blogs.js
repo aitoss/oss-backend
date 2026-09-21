@@ -8,6 +8,7 @@ const User = require('../../models/User');
 const ArticleAudit = require('../../models/ArticleAudit');
 const {
   ArticleMutationError,
+  loadOwnedArticle,
   softDeleteArticle,
 } = require('../../services/articleMutations');
 const { verifySession } = require('supertokens-node/recipe/session/framework/express');
@@ -712,6 +713,43 @@ router.post('/blogs', verifySession(), async (req, res) => {
 /**
  * @swagger
  * /api/anubhav/blogs/{id}:
+ *   get:
+ *     summary: Read one of your own articles, approved or not
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: The article }
+ *       401: { description: Not authenticated }
+ *       403: { description: Not the author }
+ *       404: { description: Article not found }
+ */
+// The public GET /blog/:id hides anything still awaiting moderation, which
+// left authors unable to load their own drafts into the edit form. This is
+// the owner's view of the same document: session-gated, and deliberately not
+// cached, since /blog/:id shares that cache with everyone.
+router.get('/blogs/:id', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({supertokensUserId});
+    if (!user) return res.status(401).json({message: 'User not found'});
+
+    const article = await loadOwnedArticle(req.params.id, user);
+    return res.json({article});
+  } catch (error) {
+    if (error instanceof ArticleMutationError) {
+      return res.status(error.status).json({message: error.message});
+    }
+    console.error('Error reading article:', error);
+    return res.status(500).json({message: 'Internal server error'});
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/blogs/{id}:
  *   patch:
  *     summary: Edit an existing article (owner only)
  *     parameters:
@@ -730,11 +768,7 @@ router.patch('/blogs/:id', verifySession(), async (req, res) => {
     const user = await User.findOne({ supertokensUserId });
     if (!user) return res.status(401).json({ message: 'User not found' });
 
-    const article = await Article.findById(req.params.id);
-    if (!article) return res.status(404).json({ message: 'Article not found' });
-    if (!article.authorId || String(article.authorId) !== String(user._id)) {
-      return res.status(403).json({ message: 'You are not the author of this article' });
-    }
+    const article = await loadOwnedArticle(req.params.id, user);
 
     const before = article.toObject();
     const allowed = ['title', 'description', 'typeOfArticle', 'articleTags', 'imageUrl', 'showName'];
@@ -783,6 +817,9 @@ router.patch('/blogs/:id', verifySession(), async (req, res) => {
 
     res.json({ message: 'Article updated', article });
   } catch (error) {
+    if (error instanceof ArticleMutationError) {
+      return res.status(error.status).json({message: error.message});
+    }
     console.error('Error updating article:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
