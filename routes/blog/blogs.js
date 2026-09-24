@@ -6,6 +6,11 @@ const Article = require('../../models/Article');
 const Company = require('../../models/Company');
 const User = require('../../models/User');
 const ArticleAudit = require('../../models/ArticleAudit');
+const {
+  ArticleMutationError,
+  loadOwnedArticle,
+  softDeleteArticle,
+} = require('../../services/articleMutations');
 const { verifySession } = require('supertokens-node/recipe/session/framework/express');
 const normalizeCompanyName = require('../../utils/normalizeCompanyName');
 
@@ -708,6 +713,41 @@ router.post('/blogs', verifySession(), async (req, res) => {
 /**
  * @swagger
  * /api/anubhav/blogs/{id}:
+ *   get:
+ *     summary: Read one of your own articles, approved or not
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: The article }
+ *       401: { description: Not authenticated }
+ *       403: { description: Not the author }
+ *       404: { description: Article not found }
+ */
+// The owner's view: /blog/:id hides unapproved articles, so authors could not
+// load their own drafts. Uncached, since /blog/:id shares its cache with all.
+router.get('/blogs/:id', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({supertokensUserId});
+    if (!user) return res.status(401).json({message: 'User not found'});
+
+    const article = await loadOwnedArticle(req.params.id, user);
+    return res.json({article});
+  } catch (error) {
+    if (error instanceof ArticleMutationError) {
+      return res.status(error.status).json({message: error.message});
+    }
+    console.error('Error reading article:', error);
+    return res.status(500).json({message: 'Internal server error'});
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/blogs/{id}:
  *   patch:
  *     summary: Edit an existing article (owner only)
  *     parameters:
@@ -726,11 +766,7 @@ router.patch('/blogs/:id', verifySession(), async (req, res) => {
     const user = await User.findOne({ supertokensUserId });
     if (!user) return res.status(401).json({ message: 'User not found' });
 
-    const article = await Article.findById(req.params.id);
-    if (!article) return res.status(404).json({ message: 'Article not found' });
-    if (!article.authorId || String(article.authorId) !== String(user._id)) {
-      return res.status(403).json({ message: 'You are not the author of this article' });
-    }
+    const article = await loadOwnedArticle(req.params.id, user);
 
     const before = article.toObject();
     const allowed = ['title', 'description', 'typeOfArticle', 'articleTags', 'imageUrl', 'showName'];
@@ -757,7 +793,11 @@ router.patch('/blogs/:id', verifySession(), async (req, res) => {
     }
 
     Object.assign(article, update);
+    if (Object.keys(update).length > 0) article.updatedAt = new Date();
     await article.save();
+    // /blog/:id caches for 24h, so an edit would otherwise keep serving the
+    // old body for the rest of the day.
+    cache.delete(String(article._id));
     const after = article.toObject();
 
     const changedFields = Object.keys(update).filter(
@@ -775,8 +815,47 @@ router.patch('/blogs/:id', verifySession(), async (req, res) => {
 
     res.json({ message: 'Article updated', article });
   } catch (error) {
+    if (error instanceof ArticleMutationError) {
+      return res.status(error.status).json({message: error.message});
+    }
     console.error('Error updating article:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/anubhav/blogs/{id}:
+ *   delete:
+ *     summary: Soft-delete one of your own articles
+ *     responses:
+ *       200: { description: Article deleted }
+ *       401: { description: Not authenticated }
+ *       403: { description: Not the author }
+ *       404: { description: Article not found }
+ */
+router.delete('/blogs/:id', verifySession(), async (req, res) => {
+  try {
+    const supertokensUserId = req.session.getUserId();
+    const user = await User.findOne({supertokensUserId});
+    if (!user) return res.status(401).json({message: 'User not found'});
+
+    const article = await softDeleteArticle({
+      articleId: req.params.id,
+      user,
+    });
+
+    // Without this the deleted article stays readable by direct link until
+    // the 24h cache entry expires.
+    cache.delete(String(article._id));
+
+    return res.json({message: 'Article deleted', articleId: article._id});
+  } catch (error) {
+    if (error instanceof ArticleMutationError) {
+      return res.status(error.status).json({message: error.message});
+    }
+    console.error('Error deleting article:', error);
+    return res.status(500).json({message: 'Internal server error'});
   }
 });
 
