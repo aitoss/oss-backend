@@ -62,9 +62,12 @@ const articleSchema = new mongoose.Schema({
     default: null,
     index: true,
   },
+  // Null, not Date.now: mongoose applies defaults when it hydrates a document
+  // missing the path, so Date.now made every pre-existing article report that
+  // it had been edited today.
   updatedAt: {
     type: Date,
-    default: Date.now,
+    default: null,
   },
   deletedAt: {
     type: Date,
