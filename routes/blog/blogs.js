@@ -53,6 +53,40 @@ app.use(express.json());
 
 
 /**
+ * Turns the shared filter query params into mongo conditions.
+ *
+ * @param {object} query req.query
+ * @return {object} conditions to merge into the article filter
+ */
+function articleFilters(query) {
+  const conditions = {};
+
+  if (query.role) {
+    conditions.typeOfArticle = {$in: String(query.role).split(',')};
+  }
+
+  if (query.year) {
+    const years = String(query.year)
+        .split(',')
+        .map((value) => parseInt(value, 10))
+        .filter((value) => Number.isInteger(value));
+
+    if (years.length > 0) {
+      // A year is a range over createdAt rather than a stored column, so the
+      // existing index still does the work.
+      conditions.$or = years.map((year) => ({
+        createdAt: {
+          $gte: new Date(Date.UTC(year, 0, 1)),
+          $lt: new Date(Date.UTC(year + 1, 0, 1)),
+        },
+      }));
+    }
+  }
+
+  return conditions;
+}
+
+/**
  * @swagger
  * /api/anubhav/blogs:
  *   get:
@@ -86,7 +120,7 @@ router.get("/blogs", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 5; // Number of articles per page
 
-    const query = { isAuthentic: true };
+    const query = { isAuthentic: true, ...articleFilters(req.query) };
     if (useLatest) {
       query.sort = { createdAt: -1 };
     }
@@ -272,7 +306,11 @@ router.get('/search', async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const baseQuery = { isAuthentic: true, $text: { $search: query } };
+  const baseQuery = {
+    isAuthentic: true,
+    $text: { $search: query },
+    ...articleFilters(req.query),
+  };
   if (companyId) {
     baseQuery.companyId = companyId;
   } else if (companyName) {
